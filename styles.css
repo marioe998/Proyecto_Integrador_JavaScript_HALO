@@ -1,8 +1,13 @@
 /* ============================================================
    UNSC · Sistema de reclutamiento
-   Parte 1: variables, base, encabezado, menú, panel y componentes
+   Estilos de toda la página (tema oscuro verde y dorado, tipo Halo)
    ============================================================ */
 
+
+/* ---------- VARIABLES ----------
+   Aquí guardo los colores y las fuentes una sola vez.
+   Después los uso con var(--nombre), así si quiero cambiar un color
+   lo cambio aquí y se cambia en toda la página. */
 :root {
     --fondo: #0a0e0c;
     --panel: #111a15;
@@ -20,9 +25,15 @@
     --fuente-cuerpo: "Rajdhani", "Segoe UI", sans-serif;
     --fuente-mono: "Share Tech Mono", Consolas, monospace;
 
+    /* tamaño de la esquina cortada de botones y tarjetas */
     --corte: 10px;
 }
 
+
+/* ---------- BASE ---------- */
+
+/* quito los márgenes que trae el navegador por defecto.
+   box-sizing hace que el padding cuente dentro del ancho, si no se descuadra todo */
 * {
     box-sizing: border-box;
     margin: 0;
@@ -33,6 +44,8 @@ html {
     scroll-behavior: smooth;
 }
 
+/* el fondo tiene unas líneas verdes muy suaves que forman una cuadrícula.
+   Son dos gradientes (uno horizontal y otro vertical) repetidos cada 36px */
 body {
     min-height: 100vh;
     display: flex;
@@ -48,6 +61,7 @@ body {
     line-height: 1.5;
 }
 
+/* caja centrada con ancho máximo, para que en pantallas grandes no quede todo estirado */
 .contenedor {
     width: 100%;
     max-width: 1200px;
@@ -55,13 +69,15 @@ body {
     padding: 0 20px;
 }
 
-/* ---------- Encabezado ---------- */
+
+/* ---------- ENCABEZADO ---------- */
 .encabezado {
     background: #070a08;
     border-bottom: 1px solid var(--borde);
     border-top: 3px solid var(--dorado);
 }
 
+/* flex-wrap deja que los elementos bajen de línea si no caben (en el celular) */
 .encabezado__interno {
     display: flex;
     align-items: center;
@@ -78,6 +94,8 @@ body {
     gap: 14px;
 }
 
+/* el emblema es un cuadrado girado 45° para que quede como rombo.
+   El icono de adentro lo giro -45° para que quede derecho otra vez */
 .marca__emblema {
     width: 46px;
     height: 46px;
@@ -130,7 +148,11 @@ body {
     margin-right: 4px;
 }
 
-/* ---------- Botones ---------- */
+
+/* ---------- BOTONES ---------- */
+
+/* clip-path recorta el botón con un polígono para cortarle dos esquinas.
+   Los puntos van en orden, dando la vuelta por todo el borde */
 .boton {
     display: inline-flex;
     align-items: center;
@@ -176,7 +198,18 @@ body {
     color: #0a0e0c;
 }
 
-/* ---------- Menú ---------- */
+/* versión chiquita para los botones de Editar y Eliminar de las tablas.
+   Cambio la variable --corte solo aquí para que la esquina cortada sea más pequeña */
+.boton--pequeno {
+    --corte: 6px;
+    padding: 4px 10px;
+    font-size: 13px;
+}
+
+
+/* ---------- MENÚ ---------- */
+
+/* position: sticky hace que el menú se quede pegado arriba cuando bajas */
 .menu {
     background: var(--panel);
     border-bottom: 1px solid var(--borde);
@@ -185,6 +218,7 @@ body {
     z-index: 10;
 }
 
+/* overflow-x: auto = si no caben todos los botones, el menú se desliza de lado */
 .menu__interno {
     display: flex;
     gap: 2px;
@@ -215,18 +249,22 @@ body {
     background: rgba(255, 255, 255, 0.03);
 }
 
+/* la pestaña donde estoy parado (el JS le pone esta clase) */
 .menu__item.activo {
     color: var(--dorado);
     border-bottom-color: var(--dorado);
 }
 
-/* ---------- Contenido ---------- */
+
+/* ---------- SECCIONES (VISTAS) ---------- */
 .principal {
     flex: 1;
     padding-top: 28px;
     padding-bottom: 40px;
 }
 
+/* TRUCO IMPORTANTE: todas las vistas están ocultas (display: none)
+   y solo la que tiene la clase "activa" se muestra. El JS va cambiando esa clase */
 .vista {
     display: none;
 }
@@ -236,6 +274,7 @@ body {
     animation: aparecer 0.25s ease;
 }
 
+/* animación chiquita: la sección aparece subiendo un poquito */
 @keyframes aparecer {
     from { opacity: 0; transform: translateY(6px); }
     to { opacity: 1; transform: translateY(0); }
@@ -253,7 +292,11 @@ body {
     border-left: 4px solid var(--verde);
 }
 
-/* ---------- Tarjetas de resumen ---------- */
+
+/* ---------- TARJETAS DE RESUMEN (PANEL) ---------- */
+
+/* grid con auto-fit y minmax: las tarjetas se acomodan solas,
+   caben tantas como se pueda con mínimo 170px cada una */
 .tarjetas {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
@@ -262,7 +305,6 @@ body {
 }
 
 .tarjeta {
-    position: relative;
     display: flex;
     align-items: center;
     gap: 14px;
@@ -273,6 +315,7 @@ body {
     clip-path: polygon(0 0, calc(100% - var(--corte)) 0, 100% var(--corte), 100% 100%, 0 100%);
 }
 
+/* variantes de color: solo cambian el borde izquierdo y el icono */
 .tarjeta--dorado { border-left-color: var(--dorado); }
 .tarjeta--cian { border-left-color: var(--cian); }
 
@@ -298,7 +341,11 @@ body {
     line-height: 1.1;
 }
 
-/* ---------- Cajas ---------- */
+
+/* ---------- CAJAS ---------- */
+
+/* el panel tiene dos columnas: la de las barras (5 partes) y la de la tabla (7 partes).
+   minmax(0, ...) evita que la tabla ensanche la columna y rompa el diseño */
 .rejilla-panel {
     display: grid;
     grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
@@ -310,6 +357,12 @@ body {
     border: 1px solid var(--borde);
     padding: 18px;
     clip-path: polygon(0 0, calc(100% - 14px) 0, 100% 14px, 100% 100%, 14px 100%, 0 calc(100% - 14px));
+}
+
+/* el + significa "una caja que viene justo después de otra caja":
+   así les doy espacio entre ellas sin tener que ponerle margen a todas */
+.caja + .caja {
+    margin-top: 18px;
 }
 
 .caja__titulo {
@@ -324,7 +377,10 @@ body {
     color: var(--dorado);
 }
 
-/* ---------- Gráfico de barras (solo CSS) ---------- */
+
+/* ---------- GRÁFICO DE BARRAS (solo CSS) ----------
+   Cada barra es un div con fondo oscuro y otro div verde adentro.
+   El ancho del verde lo calcula el JS en porcentaje. */
 .grafico {
     display: grid;
     gap: 16px;
@@ -348,7 +404,10 @@ body {
     background: var(--verde);
 }
 
-/* ---------- Tabla ---------- */
+
+/* ---------- TABLAS ---------- */
+
+/* si la tabla es muy ancha (celular), este contenedor deja deslizarla de lado */
 .tabla-scroll {
     overflow-x: auto;
 }
@@ -376,22 +435,33 @@ body {
     border-bottom: 1px solid rgba(38, 56, 45, 0.6);
 }
 
+/* la fila se ilumina un poquito cuando paso el mouse */
 .tabla tbody tr:hover {
     background: rgba(122, 163, 84, 0.06);
 }
 
+/* para números, ids y fechas (letra tipo máquina de escribir) */
 .tabla td.mono {
     font-family: var(--fuente-mono);
     color: var(--texto-suave);
 }
 
+/* la celda de los botones Editar y Eliminar, pegada a la derecha */
+.tabla td.acciones {
+    white-space: nowrap;
+    text-align: right;
+}
+
+/* el mensaje cuando la tabla está vacía.
+   Lleva !important porque si no la regla de .tabla td le gana en prioridad */
 .vacio {
     text-align: center;
     padding: 24px 10px !important;
     color: var(--texto-suave);
 }
 
-/* ---------- Etiquetas de estado ---------- */
+
+/* ---------- ETIQUETAS APTO / NO APTO ---------- */
 .etiqueta {
     display: inline-block;
     padding: 2px 10px;
@@ -414,11 +484,10 @@ body {
     background: rgba(200, 88, 74, 0.12);
 }
 
-/* ---------- Formularios ---------- */
-.caja + .caja {
-    margin-top: 18px;
-}
 
+/* ---------- FORMULARIOS ---------- */
+
+/* mismo truco de auto-fit: los campos se acomodan solos según el ancho */
 .formulario {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
@@ -439,6 +508,7 @@ body {
     color: var(--texto-suave);
 }
 
+/* color-scheme: dark hace que el calendario del input de fecha salga oscuro también */
 .campo input,
 .campo select {
     padding: 9px 10px;
@@ -447,14 +517,18 @@ body {
     color: var(--texto);
     font-family: var(--fuente-cuerpo);
     font-size: 16px;
+    color-scheme: dark;
 }
 
+/* cuando hago clic en un campo se le pone el borde verde.
+   outline: none quita el borde azul feo que trae el navegador */
 .campo input:focus,
 .campo select:focus {
     outline: none;
     border-color: var(--verde);
 }
 
+/* el campo del ID (no se puede escribir) se ve apagadito */
 .campo input[readonly] {
     color: var(--texto-suave);
     font-family: var(--fuente-mono);
@@ -464,42 +538,39 @@ body {
     background: var(--panel);
 }
 
+/* el checkbox va alineado abajo para quedar a la altura de los otros campos */
+.campo--check {
+    justify-content: flex-end;
+}
+
+/* repito .campo label porque si no la regla de arriba (mayúsculas, gris) le gana */
+.campo label.casilla {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 9px 0;
+    font-size: 16px;
+    letter-spacing: normal;
+    text-transform: none;
+    color: var(--texto);
+    cursor: pointer;
+}
+
+/* accent-color pinta el checkbox del verde de la página */
+.casilla input {
+    width: 18px;
+    height: 18px;
+    accent-color: var(--verde);
+}
+
 .acciones-form {
     display: flex;
     flex-wrap: wrap;
     gap: 10px;
 }
 
-.boton--pequeno {
-    --corte: 6px;
-    padding: 4px 10px;
-    font-size: 13px;
-}
 
-.tabla td.acciones {
-    white-space: nowrap;
-    text-align: right;
-}
-
-/* ---------- Secciones pendientes ---------- */
-.pendiente {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
-    padding: 60px 20px;
-    border: 1px dashed var(--borde);
-    color: var(--texto-suave);
-    font-family: var(--fuente-mono);
-    font-size: 15px;
-}
-
-.pendiente i {
-    font-size: 22px;
-    color: var(--dorado);
-}
-
-/* ---------- Pie ---------- */
+/* ---------- PIE DE PÁGINA ---------- */
 .pie {
     padding: 16px 0;
     border-top: 1px solid var(--borde);
@@ -510,7 +581,10 @@ body {
     color: var(--texto-suave);
 }
 
-/* ---------- Avisos (toast) ---------- */
+
+/* ---------- MENSAJES EMERGENTES ----------
+   position: fixed los deja pegados a la esquina de abajo a la derecha
+   aunque uno haga scroll */
 .avisos {
     position: fixed;
     right: 20px;
@@ -536,13 +610,18 @@ body {
 .aviso--exito { border-left-color: var(--verde); }
 .aviso--error { border-left-color: var(--rojo); }
 
-/* ---------- Responsive ---------- */
+
+/* ---------- RESPONSIVE ----------
+   @media = estas reglas solo se aplican cuando la pantalla es más pequeña */
+
+/* tablets: el panel pasa de dos columnas a una */
 @media (max-width: 860px) {
     .rejilla-panel {
         grid-template-columns: minmax(0, 1fr);
     }
 }
 
+/* celulares: letras un poco más chicas */
 @media (max-width: 560px) {
     body { font-size: 16px; }
     .encabezado__interno { justify-content: center; }
