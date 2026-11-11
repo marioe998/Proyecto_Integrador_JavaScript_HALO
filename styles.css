@@ -1,0 +1,484 @@
+/* ============================================================
+   UNSC · Sistema de reclutamiento
+   Parte 1: variables, base, encabezado, menú, panel y componentes
+   ============================================================ */
+
+:root {
+    --fondo: #0a0e0c;
+    --panel: #111a15;
+    --panel-2: #16221b;
+    --borde: #26382d;
+    --verde: #7aa354;
+    --verde-oscuro: #3f5d2e;
+    --dorado: #d4a93c;
+    --cian: #4aa3c7;
+    --rojo: #c8584a;
+    --texto: #dbe3d6;
+    --texto-suave: #8fa093;
+
+    --fuente-titulo: "Orbitron", "Segoe UI", sans-serif;
+    --fuente-cuerpo: "Rajdhani", "Segoe UI", sans-serif;
+    --fuente-mono: "Share Tech Mono", Consolas, monospace;
+
+    --corte: 10px;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+html {
+    scroll-behavior: smooth;
+}
+
+body {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    background-color: var(--fondo);
+    background-image:
+        linear-gradient(rgba(122, 163, 84, 0.045) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(122, 163, 84, 0.045) 1px, transparent 1px);
+    background-size: 36px 36px;
+    color: var(--texto);
+    font-family: var(--fuente-cuerpo);
+    font-size: 17px;
+    line-height: 1.5;
+}
+
+.contenedor {
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px;
+}
+
+/* ---------- Encabezado ---------- */
+.encabezado {
+    background: #070a08;
+    border-bottom: 1px solid var(--borde);
+    border-top: 3px solid var(--dorado);
+}
+
+.encabezado__interno {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+    padding-top: 14px;
+    padding-bottom: 14px;
+}
+
+.marca {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.marca__emblema {
+    width: 46px;
+    height: 46px;
+    display: grid;
+    place-items: center;
+    border: 2px solid var(--dorado);
+    color: var(--dorado);
+    font-size: 24px;
+    transform: rotate(45deg);
+    margin: 0 6px;
+}
+
+.marca__emblema i {
+    transform: rotate(-45deg);
+}
+
+.marca__titulo {
+    font-family: var(--fuente-titulo);
+    font-size: 24px;
+    font-weight: 700;
+    letter-spacing: 0.22em;
+    color: var(--dorado);
+    line-height: 1.1;
+}
+
+.marca__subtitulo {
+    font-family: var(--fuente-mono);
+    font-size: 13px;
+    color: var(--verde);
+    letter-spacing: 0.04em;
+}
+
+.encabezado__acciones {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.estado {
+    font-family: var(--fuente-mono);
+    font-size: 13px;
+    color: var(--texto-suave);
+    margin-right: 6px;
+}
+
+.estado i {
+    color: var(--verde);
+    font-size: 10px;
+    margin-right: 4px;
+}
+
+/* ---------- Botones ---------- */
+.boton {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    font-family: var(--fuente-cuerpo);
+    font-size: 15px;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    cursor: pointer;
+    border: 1px solid var(--borde);
+    background: transparent;
+    color: var(--texto);
+    clip-path: polygon(var(--corte) 0, 100% 0, 100% calc(100% - var(--corte)), calc(100% - var(--corte)) 100%, 0 100%, 0 var(--corte));
+    transition: background-color 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.boton--secundario:hover {
+    border-color: var(--verde);
+    color: var(--verde);
+    background: rgba(122, 163, 84, 0.08);
+}
+
+.boton--peligro {
+    border-color: #5a2d28;
+    color: var(--rojo);
+}
+
+.boton--peligro:hover {
+    background: rgba(200, 88, 74, 0.12);
+    border-color: var(--rojo);
+}
+
+.boton--primario {
+    background: var(--verde-oscuro);
+    border-color: var(--verde);
+    color: #eef5e6;
+}
+
+.boton--primario:hover {
+    background: var(--verde);
+    color: #0a0e0c;
+}
+
+/* ---------- Menú ---------- */
+.menu {
+    background: var(--panel);
+    border-bottom: 1px solid var(--borde);
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+.menu__interno {
+    display: flex;
+    gap: 2px;
+    overflow-x: auto;
+    scrollbar-width: thin;
+}
+
+.menu__item {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 14px 16px;
+    font-family: var(--fuente-cuerpo);
+    font-size: 16px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    white-space: nowrap;
+    background: none;
+    border: none;
+    border-bottom: 3px solid transparent;
+    color: var(--texto-suave);
+    cursor: pointer;
+    transition: color 0.15s, border-color 0.15s, background-color 0.15s;
+}
+
+.menu__item:hover {
+    color: var(--texto);
+    background: rgba(255, 255, 255, 0.03);
+}
+
+.menu__item.activo {
+    color: var(--dorado);
+    border-bottom-color: var(--dorado);
+}
+
+/* ---------- Contenido ---------- */
+.principal {
+    flex: 1;
+    padding-top: 28px;
+    padding-bottom: 40px;
+}
+
+.vista {
+    display: none;
+}
+
+.vista.activa {
+    display: block;
+    animation: aparecer 0.25s ease;
+}
+
+@keyframes aparecer {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.titulo-seccion {
+    font-family: var(--fuente-titulo);
+    font-size: 20px;
+    font-weight: 500;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--texto);
+    margin-bottom: 20px;
+    padding-left: 12px;
+    border-left: 4px solid var(--verde);
+}
+
+/* ---------- Tarjetas de resumen ---------- */
+.tarjetas {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+    gap: 14px;
+    margin-bottom: 22px;
+}
+
+.tarjeta {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 16px 18px;
+    background: var(--panel);
+    border: 1px solid var(--borde);
+    border-left: 4px solid var(--verde);
+    clip-path: polygon(0 0, calc(100% - var(--corte)) 0, 100% var(--corte), 100% 100%, 0 100%);
+}
+
+.tarjeta--dorado { border-left-color: var(--dorado); }
+.tarjeta--cian { border-left-color: var(--cian); }
+
+.tarjeta__icono {
+    font-size: 30px;
+    color: var(--verde);
+}
+
+.tarjeta--dorado .tarjeta__icono { color: var(--dorado); }
+.tarjeta--cian .tarjeta__icono { color: var(--cian); }
+
+.tarjeta__etiqueta {
+    font-size: 14px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--texto-suave);
+}
+
+.tarjeta__valor {
+    font-family: var(--fuente-titulo);
+    font-size: 26px;
+    font-weight: 700;
+    line-height: 1.1;
+}
+
+/* ---------- Cajas ---------- */
+.rejilla-panel {
+    display: grid;
+    grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+    gap: 18px;
+}
+
+.caja {
+    background: var(--panel);
+    border: 1px solid var(--borde);
+    padding: 18px;
+    clip-path: polygon(0 0, calc(100% - 14px) 0, 100% 14px, 100% 100%, 14px 100%, 0 calc(100% - 14px));
+}
+
+.caja__titulo {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 14px;
+    font-size: 15px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--dorado);
+}
+
+/* ---------- Gráfico de barras (solo CSS) ---------- */
+.grafico {
+    display: grid;
+    gap: 16px;
+}
+
+.barra__texto {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 4px;
+    font-size: 16px;
+}
+
+.barra__fondo {
+    height: 12px;
+    background: var(--fondo);
+    border: 1px solid var(--borde);
+}
+
+.barra__relleno {
+    height: 100%;
+    background: var(--verde);
+}
+
+/* ---------- Tabla ---------- */
+.tabla-scroll {
+    overflow-x: auto;
+}
+
+.tabla {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 16px;
+}
+
+.tabla th {
+    text-align: left;
+    padding: 8px 10px;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--texto-suave);
+    border-bottom: 1px solid var(--borde);
+    white-space: nowrap;
+}
+
+.tabla td {
+    padding: 10px;
+    border-bottom: 1px solid rgba(38, 56, 45, 0.6);
+}
+
+.tabla tbody tr:hover {
+    background: rgba(122, 163, 84, 0.06);
+}
+
+.tabla td.mono {
+    font-family: var(--fuente-mono);
+    color: var(--texto-suave);
+}
+
+.vacio {
+    text-align: center;
+    padding: 24px 10px !important;
+    color: var(--texto-suave);
+}
+
+/* ---------- Etiquetas de estado ---------- */
+.etiqueta {
+    display: inline-block;
+    padding: 2px 10px;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    border: 1px solid;
+}
+
+.etiqueta--apto {
+    color: var(--verde);
+    border-color: var(--verde-oscuro);
+    background: rgba(122, 163, 84, 0.12);
+}
+
+.etiqueta--no-apto {
+    color: var(--rojo);
+    border-color: #5a2d28;
+    background: rgba(200, 88, 74, 0.12);
+}
+
+/* ---------- Secciones pendientes ---------- */
+.pendiente {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 60px 20px;
+    border: 1px dashed var(--borde);
+    color: var(--texto-suave);
+    font-family: var(--fuente-mono);
+    font-size: 15px;
+}
+
+.pendiente i {
+    font-size: 22px;
+    color: var(--dorado);
+}
+
+/* ---------- Pie ---------- */
+.pie {
+    padding: 16px 0;
+    border-top: 1px solid var(--borde);
+    background: #070a08;
+    text-align: center;
+    font-family: var(--fuente-mono);
+    font-size: 13px;
+    color: var(--texto-suave);
+}
+
+/* ---------- Avisos (toast) ---------- */
+.avisos {
+    position: fixed;
+    right: 20px;
+    bottom: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    z-index: 50;
+}
+
+.aviso {
+    min-width: 240px;
+    max-width: 340px;
+    padding: 12px 16px;
+    background: var(--panel-2);
+    border: 1px solid var(--borde);
+    border-left: 4px solid var(--cian);
+    color: var(--texto);
+    font-size: 16px;
+    animation: aparecer 0.2s ease;
+}
+
+.aviso--exito { border-left-color: var(--verde); }
+.aviso--error { border-left-color: var(--rojo); }
+
+/* ---------- Responsive ---------- */
+@media (max-width: 860px) {
+    .rejilla-panel {
+        grid-template-columns: minmax(0, 1fr);
+    }
+}
+
+@media (max-width: 560px) {
+    body { font-size: 16px; }
+    .encabezado__interno { justify-content: center; }
+    .marca__titulo { font-size: 20px; }
+    .titulo-seccion { font-size: 17px; }
+}

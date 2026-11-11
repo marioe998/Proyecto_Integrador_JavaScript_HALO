@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UNSC · Sistema de reclutamiento</title>
+
+    <!-- Fuentes e iconos -->
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=Rajdhani:wght@400;500;600&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css">
+
+    <!-- Estilos propios -->
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+    <!-- ===== ENCABEZADO ===== -->
+    <header class="encabezado">
+        <div class="contenedor encabezado__interno">
+            <div class="marca">
+                <div class="marca__emblema">
+                    <i class="ti ti-shield-check"></i>
+                </div>
+                <div>
+                    <h1 class="marca__titulo">UNSC</h1>
+                    <p class="marca__subtitulo">Sistema de reclutamiento · Comando central</p>
+                </div>
+            </div>
+
+            <div class="encabezado__acciones">
+                <span class="estado">
+                    <i class="ti ti-circle-filled"></i> Sesión activa · <span id="fechaHoy"></span>
+                </span>
+                <button class="boton boton--secundario" onclick="exportarJSON()">
+                    <i class="ti ti-download"></i> Exportar JSON
+                </button>
+                <button class="boton boton--peligro" onclick="restablecerDatos()">
+                    <i class="ti ti-refresh"></i> Restablecer datos
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- ===== MENÚ ===== -->
+    <nav class="menu">
+        <div class="contenedor menu__interno">
+            <button class="menu__item activo" data-vista="panel"><i class="ti ti-layout-dashboard"></i> Panel</button>
+            <button class="menu__item" data-vista="ramas"><i class="ti ti-flag"></i> Ramas</button>
+            <button class="menu__item" data-vista="divisiones"><i class="ti ti-sitemap"></i> Divisiones</button>
+            <button class="menu__item" data-vista="divisiones-especiales"><i class="ti ti-star"></i> Divisiones especiales</button>
+            <button class="menu__item" data-vista="reclutas"><i class="ti ti-users"></i> Reclutas</button>
+            <button class="menu__item" data-vista="aptos"><i class="ti ti-clipboard-check"></i> Aptos división especial</button>
+            <button class="menu__item" data-vista="consultas"><i class="ti ti-search"></i> Consultas</button>
+        </div>
+    </nav>
+
+    <!-- ===== CONTENIDO ===== -->
+    <main class="contenedor principal">
+
+        <!-- PANEL -->
+        <section class="vista activa" id="vista-panel">
+            <h2 class="titulo-seccion">Panel de mando</h2>
+
+            <div class="tarjetas" id="tarjetas"></div>
+
+            <div class="rejilla-panel">
+                <article class="caja">
+                    <h3 class="caja__titulo"><i class="ti ti-chart-bar"></i> Reclutas por rama</h3>
+                    <div class="grafico" id="grafico"></div>
+                </article>
+
+                <article class="caja">
+                    <h3 class="caja__titulo"><i class="ti ti-list-details"></i> Últimas evaluaciones</h3>
+                    <div class="tabla-scroll">
+                        <table class="tabla">
+                            <thead>
+                                <tr>
+                                    <th>Recluta</th>
+                                    <th>División especial</th>
+                                    <th>Fecha</th>
+                                    <th>Puntaje</th>
+                                    <th>Estado</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tablaEvaluaciones"></tbody>
+                        </table>
+                    </div>
+                </article>
+            </div>
+        </section>
+
+        <!-- SECCIONES PENDIENTES (se completan en las próximas entregas) -->
+        <section class="vista" id="vista-ramas">
+            <h2 class="titulo-seccion">Ramas</h2>
+            <div class="pendiente"><i class="ti ti-tools"></i> Módulo en construcción.</div>
+        </section>
+
+        <section class="vista" id="vista-divisiones">
+            <h2 class="titulo-seccion">Divisiones</h2>
+            <div class="pendiente"><i class="ti ti-tools"></i> Módulo en construcción.</div>
+        </section>
+
+        <section class="vista" id="vista-divisiones-especiales">
+            <h2 class="titulo-seccion">Divisiones especiales</h2>
+            <div class="pendiente"><i class="ti ti-tools"></i> Módulo en construcción.</div>
+        </section>
+
+        <section class="vista" id="vista-reclutas">
+            <h2 class="titulo-seccion">Reclutas</h2>
+            <div class="pendiente"><i class="ti ti-tools"></i> Módulo en construcción.</div>
+        </section>
+
+        <section class="vista" id="vista-aptos">
+            <h2 class="titulo-seccion">Aptos división especial</h2>
+            <div class="pendiente"><i class="ti ti-tools"></i> Módulo en construcción.</div>
+        </section>
+
+        <section class="vista" id="vista-consultas">
+            <h2 class="titulo-seccion">Consultas</h2>
+            <div class="pendiente"><i class="ti ti-tools"></i> Módulo en construcción.</div>
+        </section>
+
+    </main>
+
+    <footer class="pie">
+        <div class="contenedor">
+            UNSC · Proyecto académico · Los datos se guardan en el navegador (localStorage)
+        </div>
+    </footer>
+
+    <!-- Aquí aparecen los mensajes emergentes -->
+    <div class="avisos" id="avisos"></div>
+
+    <script src="script.js"></script>
+</body>
+</html>
