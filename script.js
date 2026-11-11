@@ -1,19 +1,16 @@
-// ============================================================
-// UNSC - Sistema de reclutamiento
-// Proyecto de JS: no hay servidor ni base de datos, todo se guarda
-// en el localStorage del navegador en formato JSON.
-// Tiene las mismas 5 entidades que el proyecto de Java:
-// ramas, divisiones, divisiones especiales, reclutas y aptos.
-// ============================================================
+// Sistema de reclutamiento UNSC
+// Aquí está toda la lógica de la página: guardar en localStorage, el menú,
+// el panel y los módulos (ramas, divisiones, divisiones especiales,
+// reclutas, aptos y consultas). Está en el mismo orden en que se ve la página.
 
 
-// ============================================================
+// ---------------------------------------------------------------
 // 1. DATOS DE EJEMPLO
-// Son arreglos de objetos. Cada objeto es como una fila de una tabla.
-// Las relaciones se hacen con ids: por ejemplo un recluta tiene
-// idRama: 1, que es el id de la rama Marines.
-// Estos datos se cargan solo la primera vez para que no salga vacío.
-// ============================================================
+// Son datos de prueba para que la página no se vea vacía la primera vez.
+// Cada uno es un arreglo de objetos (como las filas de una tabla en SQL).
+// Para relacionar las cosas uso el id de la otra tabla, igual que una llave
+// foránea: por ejemplo un recluta tiene idRama: 1, que es el id de "Marines".
+// ---------------------------------------------------------------
 const ramasEjemplo = [
     { id: 1, nombre: "Marines", descripcion: "Infantería de marina del UNSC" },
     { id: 2, nombre: "Armada", descripcion: "Flota espacial y operaciones navales" },
@@ -52,7 +49,7 @@ const reclutasEjemplo = [
     { id: 10, nombre: "Felipe", apellido: "Arango", altura: 185, peso: 85.6, idRama: 1 }
 ];
 
-// la fecha se guarda como texto "año-mes-día", que es como la da el input type="date"
+// las evaluaciones: cada una une un recluta con una división especial
 const aptosEjemplo = [
     { id: 1, idRecluta: 6, idDivisionEspecial: 2, aptoServicio: true, fechaEvaluacion: "2026-10-02", puntaje: 94 },
     { id: 2, idRecluta: 2, idDivisionEspecial: 1, aptoServicio: true, fechaEvaluacion: "2026-10-05", puntaje: 88 },
@@ -64,19 +61,20 @@ const aptosEjemplo = [
 ];
 
 
-// ============================================================
+// ---------------------------------------------------------------
 // 2. LOCALSTORAGE
-// localStorage solo puede guardar TEXTO, no arreglos. Por eso:
+// localStorage solo puede guardar TEXTO, no arreglos ni objetos.
+// Entonces:
 //   - para guardar uso JSON.stringify (arreglo -> texto)
-//   - para leer uso JSON.parse (texto -> arreglo otra vez)
-// Con estas dos funciones hago todo el guardado del proyecto.
-// ============================================================
+//   - para leer uso JSON.parse (texto -> arreglo)
+// Con estas dos funciones hago todo, no uso localStorage directo en otro lado.
+// ---------------------------------------------------------------
 
-// lee una lista del localStorage. El "|| []" es por si todavía no existe:
-// getItem devuelve null y JSON.parse(null) da null, entonces uso un arreglo vacío
+// lee una lista. El "|| []" es por si todavía no hay nada guardado:
+// getItem devuelve null, JSON.parse(null) da null y entonces uso un arreglo vacío
 const obtenerDatos = (clave) => JSON.parse(localStorage.getItem(clave)) || [];
 
-// guarda una lista en el localStorage
+// guarda una lista (la convierte a texto primero)
 const guardarDatos = (clave, lista) => localStorage.setItem(clave, JSON.stringify(lista));
 
 function guardarEjemplos() {
@@ -88,77 +86,81 @@ function guardarEjemplos() {
 }
 
 function cargarDatosEjemplo() {
-    // si "ramas" no existe (null) es porque es la primera vez que se abre la página
+    // solo cargo los ejemplos si no hay nada guardado (o sea la primera vez que se abre)
+    // si no hiciera esto, cada vez que recargue la página se borrarían mis cambios
     if (localStorage.getItem("ramas") === null) {
         guardarEjemplos();
     }
 }
 
-// botón de arriba: borra todo lo que hice y vuelve a poner los datos de ejemplo
 function restablecerDatos() {
+    // confirm abre la ventanita de aceptar/cancelar y devuelve true o false
     const seguro = confirm("Se borrarán los cambios y se cargarán los datos de ejemplo. ¿Continuar?");
+
     if (seguro) {
         guardarEjemplos();
-        // también limpio los formularios por si había algo a medio editar
+
+        // también limpio los formularios por si alguno estaba a medio editar
         limpiarRama();
         limpiarDivision();
         limpiarDivisionEspecial();
         limpiarRecluta();
         limpiarApto();
-        limpiarConsulta();
-        limpiarDetalle();
+        limpiarBusqueda();
+        limpiarAdscripciones();
+
         mostrarTodo();
         mostrarMensaje("Datos restablecidos");
     }
 }
 
 
-// ============================================================
-// 3. MENSAJE EMERGENTE
-// Es el cuadrito que sale abajo a la derecha.
-// Si le paso "error" como segundo valor sale con borde rojo.
-// ============================================================
+// ---------------------------------------------------------------
+// 3. MENSAJITO EMERGENTE
+// Sale abajo a la derecha unos segundos. Si le paso "error" se ve en rojo.
+// ---------------------------------------------------------------
 function mostrarMensaje(texto, tipo) {
-    // creo el div desde JS (todavía no se ve, solo existe en memoria)
+    // createElement crea un div nuevo en memoria, todavía no se ve en la página
     const aviso = document.createElement("div");
     aviso.className = "aviso";
+
     if (tipo === "error") {
         aviso.classList.add("aviso--error");
     } else {
         aviso.classList.add("aviso--exito");
     }
+
     aviso.textContent = texto;
 
-    // appendChild lo mete dentro del div #avisos y ahí recién aparece en pantalla
+    // appendChild lo mete dentro del contenedor "avisos" y ahí sí aparece
     document.getElementById("avisos").appendChild(aviso);
 
-    // a los 3 segundos (3000 ms) lo borro
+    // setTimeout espera 3000 ms (3 segundos) y después borra el mensaje
     setTimeout(() => aviso.remove(), 3000);
 }
 
 
-// ============================================================
+// ---------------------------------------------------------------
 // 4. MENÚ
-// En realidad es una sola página. Todas las secciones existen en el HTML
-// pero solo se ve la que tiene la clase "activa".
-// ============================================================
+// Todas las secciones están en el mismo html. Lo que hago es mostrar una
+// y esconder las demás cambiando la clase "activa" (el css se encarga del resto).
+// ---------------------------------------------------------------
 function mostrarVista(nombre) {
-    // primero le quito la clase "activa" a todas las secciones y a todos los botones
+    // primero le quito "activa" a todas las secciones y a todos los botones
     document.querySelectorAll(".vista").forEach((vista) => vista.classList.remove("activa"));
     document.querySelectorAll(".menu__item").forEach((boton) => boton.classList.remove("activo"));
 
-    // y se la pongo solo a la sección que eligió el usuario y a su botón.
-    // Las comillas invertidas (``) permiten meter variables con ${}
+    // y se la pongo solo a la que elegí. El id de la sección es "vista-" + el nombre
     document.getElementById(`vista-${nombre}`).classList.add("activa");
     document.querySelector(`[data-vista="${nombre}"]`).classList.add("activo");
 
-    // cada vez que cambio de pestaña redibujo todo, así las tablas y las listas
-    // desplegables siempre salen con los datos más nuevos
+    // cada vez que cambio de pestaña vuelvo a dibujar todo, así lo que cambié
+    // en una pestaña se ve actualizado en las otras (y los select tienen las opciones nuevas)
     mostrarTodo();
 }
 
-// a cada botón del menú le pongo un "oyente" del evento click.
-// boton.dataset.vista lee el atributo data-vista="..." que puse en el HTML
+// a cada botón del menú le pongo un listener para el clic.
+// boton.dataset.vista lee el atributo data-vista que puse en el html
 document.querySelectorAll(".menu__item").forEach((boton) => {
     boton.addEventListener("click", () => {
         mostrarVista(boton.dataset.vista);
@@ -166,13 +168,12 @@ document.querySelectorAll(".menu__item").forEach((boton) => {
 });
 
 
-// ============================================================
-// 5. FUNCIONES DE AYUDA
-// Las uso en varios lados para no repetir código.
-// ============================================================
+// ---------------------------------------------------------------
+// 5. FUNCIONES QUE USO EN VARIOS LADOS
+// ---------------------------------------------------------------
 
-// el id nuevo es el id más grande que haya + 1
-// (así nunca se repite, ni siquiera si borro uno del medio)
+// como no hay base de datos que cree los id sola (el autoincrement de SQL),
+// el id nuevo lo calculo yo: el id más grande que haya + 1
 function siguienteId(lista) {
     let mayor = 0;
     lista.forEach((item) => {
@@ -184,13 +185,13 @@ function siguienteId(lista) {
 }
 
 // busca en una lista el elemento con ese id y devuelve su nombre.
-// find devuelve el primer elemento que cumpla la condición (o undefined si no hay)
+// Sirve para mostrar "Marines" en la tabla en vez del número 1
 function nombreDe(lista, id) {
     const item = lista.find((x) => x.id === id);
     if (item) {
         return item.nombre;
     }
-    return "—";
+    return "—"; // si no lo encuentra (por ejemplo si lo borraron)
 }
 
 // junta nombre y apellido de un recluta
@@ -201,7 +202,14 @@ function nombreCompleto(recluta) {
     return "—";
 }
 
-// si el valor está vacío muestro un guion en vez de dejar la celda en blanco
+// la fecha se guarda como 2026-10-02 (así la da el input date)
+// y yo la muestro como 02/10/2026: la parto por los guiones y la reordeno
+function formatearFecha(fecha) {
+    const partes = fecha.split("-");
+    return `${partes[2]}/${partes[1]}/${partes[0]}`;
+}
+
+// si no hay valor (null o texto vacío) muestra un guion para que la celda no quede vacía
 function valorOGuion(valor) {
     if (valor === null || valor === "") {
         return "—";
@@ -209,58 +217,62 @@ function valorOGuion(valor) {
     return valor;
 }
 
-// la fecha viene como 2026-10-02 y la quiero ver como 02/10/2026.
-// split("-") la corta en pedacitos: ["2026", "10", "02"]
-function formatearFecha(fechaIso) {
-    const partes = fechaIso.split("-");
-    return `${partes[2]}/${partes[1]}/${partes[0]}`;
-}
-
-// devuelve el HTML de la etiqueta verde (Apto) o roja (No apto)
-function etiquetaApto(esApto) {
-    if (esApto) {
+// la etiqueta verde de "Apto" o roja de "No apto"
+function etiquetaApto(apto) {
+    if (apto) {
         return `<span class="etiqueta etiqueta--apto">Apto</span>`;
     }
     return `<span class="etiqueta etiqueta--no-apto">No apto</span>`;
 }
 
-// llena un <select> con opciones. "opciones" es un arreglo de objetos { id, texto }
+// sirve para ordenar reclutas por apellido y, si el apellido es igual, por nombre
+// (lo mismo que el ORDER BY r.apellido, r.nombre de las consultas del Java).
+// localeCompare compara textos y respeta tildes y la ñ
+function compararReclutas(a, b) {
+    const porApellido = a.apellido.localeCompare(b.apellido);
+    if (porApellido !== 0) {
+        return porApellido;
+    }
+    return a.nombre.localeCompare(b.nombre);
+}
+
+// llena un <select> con opciones. "opciones" es un arreglo de { id, texto }
 function llenarSelect(idSelect, opciones, textoInicial) {
     const select = document.getElementById(idSelect);
 
-    // guardo lo que estaba elegido porque al borrar las opciones se pierde
+    // guardo lo que estaba elegido porque al reconstruir las opciones se pierde
     const anterior = select.value;
 
+    // la primera opción es el texto de ayuda y no tiene valor (value="")
     select.innerHTML = `<option value="">${textoInicial}</option>`;
     opciones.forEach((o) => {
         select.innerHTML += `<option value="${o.id}">${o.texto}</option>`;
     });
 
-    // vuelvo a dejar elegido lo de antes
+    // y ahora le devuelvo lo que tenía elegido
     select.value = anterior;
 }
 
-// llena todas las listas desplegables de la página.
-// Hace lo mismo que recargarCombos() del MainView de Java
+// llena todos los select de la página con los datos actuales
 function actualizarSelects() {
     const ramas = obtenerDatos("ramas");
     const divisiones = obtenerDatos("divisiones");
     const especiales = obtenerDatos("divisionesEspeciales");
     const reclutas = obtenerDatos("reclutas");
 
-    // map transforma cada elemento de la lista en otra cosa.
-    // Aquí convierto cada rama en { id, texto } que es lo que pide llenarSelect
+    // map convierte cada elemento en otra cosa; aquí cada rama pasa a { id, texto }.
+    // Los paréntesis alrededor de las llaves ({ ... }) son para que JS entienda
+    // que estoy devolviendo un objeto y no abriendo un bloque de código
     const opcionesRamas = ramas.map((r) => ({ id: r.id, texto: r.nombre }));
 
-    // para las divisiones muestro también la rama, ej: "Asalto Orbital (Marines)"
     const opcionesDivisiones = divisiones.map((d) => ({
         id: d.id,
         texto: `${d.nombre} (${nombreDe(ramas, d.idRama)})`
     }));
 
-    const opcionesEspeciales = especiales.map((de) => ({
-        id: de.id,
-        texto: `${de.nombre} (${nombreDe(divisiones, de.idDivision)})`
+    const opcionesEspeciales = especiales.map((e) => ({
+        id: e.id,
+        texto: `${e.nombre} (${nombreDe(divisiones, e.idDivision)})`
     }));
 
     const opcionesReclutas = reclutas.map((r) => ({ id: r.id, texto: nombreCompleto(r) }));
@@ -268,14 +280,15 @@ function actualizarSelects() {
     llenarSelect("divRama", opcionesRamas, "Seleccione una rama");
     llenarSelect("recRama", opcionesRamas, "Seleccione una rama");
     llenarSelect("deDivision", opcionesDivisiones, "Seleccione una división");
-    llenarSelect("aptoRecluta", opcionesReclutas, "Seleccione un recluta");
-    llenarSelect("aptoDivEsp", opcionesEspeciales, "Seleccione una división especial");
+    llenarSelect("aptRecluta", opcionesReclutas, "Seleccione un recluta");
+    llenarSelect("aptEspecial", opcionesEspeciales, "Seleccione una división especial");
     llenarSelect("conDivision", opcionesDivisiones, "Seleccione una división");
-    llenarSelect("conDivEsp", opcionesEspeciales, "Seleccione una división especial");
+    llenarSelect("conEspecial", opcionesEspeciales, "Seleccione una división especial");
     llenarSelect("conDivisionDetalle", opcionesDivisiones, "Seleccione una división");
 }
 
-// vuelve a dibujar todo. La llamo cada vez que algo cambia
+// vuelve a dibujar todo: panel, tablas y selects.
+// Las consultas no las dibujo aquí porque solo se muestran cuando se aprieta el botón
 function mostrarTodo() {
     mostrarPanel();
     mostrarRamas();
@@ -287,32 +300,33 @@ function mostrarTodo() {
 }
 
 
-// ============================================================
+// ---------------------------------------------------------------
 // 6. PANEL PRINCIPAL
-// ============================================================
+// ---------------------------------------------------------------
 
-// ----- tarjetas de arriba -----
+// ----- las tarjetas de arriba -----
 function mostrarTarjetas() {
     const reclutas = obtenerDatos("reclutas");
     const aptos = obtenerDatos("aptos");
     const divisiones = obtenerDatos("divisiones");
     const divisionesEspeciales = obtenerDatos("divisionesEspeciales");
 
-    // filter me deja solo los elementos que cumplen la condición
+    // filter me deja solo los que cumplen la condición: los que son aptos para servicio
     const aprobados = aptos.filter((a) => a.aptoServicio === true);
 
-    // sumo todos los puntajes con un forEach para sacar el promedio
+    // con forEach voy sumando todos los puntajes para después sacar el promedio
     let suma = 0;
     aptos.forEach((a) => {
         suma += a.puntaje;
     });
 
-    // ojo: si no hay evaluaciones, dividir entre 0 daría error, por eso el if
+    // si no hay evaluaciones no se puede dividir (daría división por cero)
     let promedio = 0;
     if (aptos.length > 0) {
-        promedio = (suma / aptos.length).toFixed(1); // toFixed(1) deja un solo decimal
+        promedio = (suma / aptos.length).toFixed(1); // toFixed(1) = un solo decimal
     }
 
+    // cada tarjeta es un objeto con lo que necesito para dibujarla
     const tarjetas = [
         { etiqueta: "Reclutas", valor: reclutas.length, icono: "ti-users", color: "" },
         { etiqueta: "Aptos para servicio", valor: aprobados.length, icono: "ti-circle-check", color: "tarjeta--dorado" },
@@ -321,11 +335,11 @@ function mostrarTarjetas() {
         { etiqueta: "Puntaje medio", valor: promedio, icono: "ti-target", color: "tarjeta--dorado" }
     ];
 
-    // primero vacío el contenedor y luego voy agregando una tarjeta por cada elemento.
-    // innerHTML += agrega HTML nuevo al final de lo que ya había
     const contenedor = document.getElementById("tarjetas");
-    contenedor.innerHTML = "";
+    contenedor.innerHTML = ""; // lo vacío primero para que no se repitan las tarjetas
 
+    // las comillas invertidas ` ` me dejan escribir html en varias líneas
+    // y meter variables con ${...}. El += va agregando una tarjeta más a lo que ya había
     tarjetas.forEach((t) => {
         contenedor.innerHTML += `
             <article class="tarjeta ${t.color}">
@@ -339,20 +353,20 @@ function mostrarTarjetas() {
     });
 }
 
-// ----- barras: reclutas por rama -----
+// ----- las barras de reclutas por rama -----
 function mostrarGrafico() {
     const ramas = obtenerDatos("ramas");
     const reclutas = obtenerDatos("reclutas");
 
-    // por cada rama cuento cuántos reclutas tiene (filter + .length).
-    // Queda un arreglo con los números, en el mismo orden que las ramas, ej: [4, 2, 2, 2]
+    // por cada rama cuento cuántos reclutas tiene (filtro los reclutas de esa rama y miro el length)
+    // el resultado es un arreglo de números en el mismo orden que las ramas, ej: [4, 2, 2, 2]
     const cantidades = ramas.map((rama) => {
         return reclutas.filter((r) => r.idRama === rama.id).length;
     });
 
-    // busco la cantidad más grande. La barra más larga ocupa el 100%
-    // y las demás se calculan respecto a esa
-    let maximo = 1; // empieza en 1 para no dividir entre 0
+    // busco el número más grande, porque esa va a ser la barra al 100% de ancho
+    // y las demás se calculan proporcionales a esa
+    let maximo = 1;
     cantidades.forEach((c) => {
         if (c > maximo) {
             maximo = c;
@@ -362,10 +376,9 @@ function mostrarGrafico() {
     const contenedor = document.getElementById("grafico");
     contenedor.innerHTML = "";
 
-    // el forEach me da el elemento (rama) y su posición (i).
-    // Uso i para sacar la cantidad que le corresponde a esa rama
+    // forEach me da el elemento y también la posición (i), la uso para sacar su cantidad
     ramas.forEach((rama, i) => {
-        const ancho = (cantidades[i] / maximo) * 100;
+        const ancho = (cantidades[i] / maximo) * 100; // porcentaje del ancho
         contenedor.innerHTML += `
             <div class="barra">
                 <div class="barra__texto">
@@ -380,11 +393,11 @@ function mostrarGrafico() {
     });
 }
 
-// ----- tabla: las 5 evaluaciones más recientes -----
+// ----- la tabla con las últimas 5 evaluaciones -----
 function mostrarEvaluaciones() {
     const aptos = obtenerDatos("aptos");
     const reclutas = obtenerDatos("reclutas");
-    const especiales = obtenerDatos("divisionesEspeciales");
+    const divisionesEspeciales = obtenerDatos("divisionesEspeciales");
 
     const cuerpo = document.getElementById("tablaEvaluaciones");
     cuerpo.innerHTML = "";
@@ -394,20 +407,22 @@ function mostrarEvaluaciones() {
         return;
     }
 
-    // sort ordena la lista. Comparo las fechas como texto con localeCompare.
-    // Como van en formato año-mes-día se ordenan bien. b contra a = de más nueva a más vieja
+    // sort ordena el arreglo. Resto b - a (comparando fechas como texto) para que
+    // queden primero las más nuevas. Las fechas tipo 2026-10-25 se pueden comparar así
+    // porque van en orden año-mes-día
     aptos.sort((a, b) => b.fechaEvaluacion.localeCompare(a.fechaEvaluacion));
 
-    // slice(0, 5) me da solo los primeros 5
+    // slice(0, 5) corta el arreglo y me deja solo los primeros 5
     const ultimos = aptos.slice(0, 5);
 
     ultimos.forEach((apto) => {
+        // find busca UN elemento por su id (el recluta de esta evaluación)
         const recluta = reclutas.find((r) => r.id === apto.idRecluta);
 
         cuerpo.innerHTML += `
             <tr>
                 <td>${nombreCompleto(recluta)}</td>
-                <td>${nombreDe(especiales, apto.idDivisionEspecial)}</td>
+                <td>${nombreDe(divisionesEspeciales, apto.idDivisionEspecial)}</td>
                 <td class="mono">${formatearFecha(apto.fechaEvaluacion)}</td>
                 <td class="mono">${apto.puntaje}</td>
                 <td>${etiquetaApto(apto.aptoServicio)}</td>
@@ -423,16 +438,16 @@ function mostrarPanel() {
 }
 
 
-// ============================================================
+// ---------------------------------------------------------------
 // 7. RAMAS
-// Los 4 CRUD (ramas, divisiones, divisiones especiales y reclutas) usan
-// el mismo patrón de 5 funciones:
+// Los 4 primeros módulos (ramas, divisiones, divisiones especiales y reclutas)
+// son casi iguales, todos tienen estas 5 funciones:
 //   mostrarX()  -> dibuja la tabla
-//   guardarX()  -> crea (si no hay ID) o actualiza (si ya hay ID)
+//   guardarX()  -> crea (si el ID está vacío) o actualiza (si ya tiene ID)
 //   editarX()   -> pasa los datos de una fila al formulario
-//   eliminarX() -> borra, pero solo si no hay datos que dependan de eso
+//   eliminarX() -> borra, pero solo si no tiene datos que dependan de él
 //   limpiarX()  -> deja el formulario vacío
-// ============================================================
+// ---------------------------------------------------------------
 function mostrarRamas() {
     const ramas = obtenerDatos("ramas");
     const cuerpo = document.getElementById("tablaRamas");
@@ -443,8 +458,8 @@ function mostrarRamas() {
         return;
     }
 
-    // en cada fila los botones llevan el id en el onclick, ej: editarRama(3).
-    // Así cada botón sabe a qué rama pertenece
+    // a los botones les pongo onclick con el id de la fila, así cada botón
+    // sabe sobre cuál rama tiene que actuar, por ejemplo editarRama(3)
     ramas.forEach((r) => {
         cuerpo.innerHTML += `
             <tr>
@@ -461,12 +476,12 @@ function mostrarRamas() {
 }
 
 function guardarRama() {
-    // .value saca lo que el usuario escribió. trim() le quita los espacios de los lados
     const id = document.getElementById("ramaId").value;
+    // trim() le quita los espacios del principio y el final, para que "   " no cuente como nombre
     const nombre = document.getElementById("ramaNombre").value.trim();
     const descripcion = document.getElementById("ramaDescripcion").value.trim();
 
-    // validación: el nombre es obligatorio. El return corta la función aquí
+    // validación: el nombre es obligatorio. El return corta la función aquí y no guarda nada
     if (nombre === "") {
         mostrarMensaje("Ingrese el nombre de la rama", "error");
         return;
@@ -475,13 +490,12 @@ function guardarRama() {
     const ramas = obtenerDatos("ramas");
 
     if (id === "") {
-        // no hay ID en el formulario = es una rama nueva.
-        // push agrega el objeto al final del arreglo
+        // no hay id en el formulario, entonces es una rama NUEVA
         ramas.push({ id: siguienteId(ramas), nombre: nombre, descripcion: descripcion });
         mostrarMensaje("Rama guardada");
     } else {
-        // sí hay ID = estoy editando una que ya existe.
-        // La busco (el ID del formulario es texto, por eso Number()) y le cambio los datos
+        // sí hay id, entonces estoy EDITANDO: busco esa rama y le cambio los datos.
+        // Number(id) porque lo que sale del input es texto y los id en la lista son números
         const rama = ramas.find((r) => r.id === Number(id));
         rama.nombre = nombre;
         rama.descripcion = descripcion;
@@ -493,18 +507,21 @@ function guardarRama() {
     mostrarTodo();
 }
 
-// pasa los datos de la fila al formulario para poder modificarlos
 function editarRama(id) {
     const rama = obtenerDatos("ramas").find((r) => r.id === id);
+
+    // paso los datos de la fila al formulario. Al quedar el ID lleno,
+    // guardarRama() sabe que tiene que actualizar y no crear
     document.getElementById("ramaId").value = rama.id;
     document.getElementById("ramaNombre").value = rama.nombre;
     document.getElementById("ramaDescripcion").value = rama.descripcion;
-    document.getElementById("ramaNombre").focus(); // deja el cursor listo en el campo
+    document.getElementById("ramaNombre").focus(); // deja el cursor en el nombre
 }
 
 function eliminarRama(id) {
-    // en Java la base de datos no deja borrar una rama si tiene divisiones o reclutas.
-    // Aquí lo tengo que revisar yo a mano: busco si alguien usa esta rama
+    // antes de borrar reviso si hay divisiones o reclutas que usan esta rama.
+    // Si la borro se quedarían apuntando a una rama que ya no existe
+    // (en SQL esto lo evitaría la llave foránea)
     const divisiones = obtenerDatos("divisiones").filter((d) => d.idRama === id);
     const reclutas = obtenerDatos("reclutas").filter((r) => r.idRama === id);
 
@@ -514,7 +531,7 @@ function eliminarRama(id) {
     }
 
     if (confirm("¿Eliminar esta rama?")) {
-        // para borrar uso filter: me quedo con todas las ramas MENOS la que borro
+        // para borrar uso filter al revés: me quedo con todas las ramas MENOS la que quiero borrar
         const ramas = obtenerDatos("ramas").filter((r) => r.id !== id);
         guardarDatos("ramas", ramas);
         limpiarRama();
@@ -530,10 +547,10 @@ function limpiarRama() {
 }
 
 
-// ============================================================
+// ---------------------------------------------------------------
 // 8. DIVISIONES
-// (mismo patrón que Ramas, solo que además tiene el select de la rama)
-// ============================================================
+// (igual que ramas pero con el select de la rama)
+// ---------------------------------------------------------------
 function mostrarDivisiones() {
     const divisiones = obtenerDatos("divisiones");
     const ramas = obtenerDatos("ramas");
@@ -579,12 +596,11 @@ function guardarDivision() {
     const divisiones = obtenerDatos("divisiones");
 
     if (id === "") {
-        // el value del select es texto, lo paso a número con Number() para guardarlo bien
         divisiones.push({
             id: siguienteId(divisiones),
             nombre: nombre,
             descripcion: descripcion,
-            idRama: Number(idRama)
+            idRama: Number(idRama) // el value del select es texto, lo paso a número
         });
         mostrarMensaje("División guardada");
     } else {
@@ -605,12 +621,12 @@ function editarDivision(id) {
     document.getElementById("divId").value = division.id;
     document.getElementById("divNombre").value = division.nombre;
     document.getElementById("divDescripcion").value = division.descripcion;
-    document.getElementById("divRama").value = division.idRama; // así queda elegida su rama en el select
+    document.getElementById("divRama").value = division.idRama; // así el select queda en la rama correcta
     document.getElementById("divNombre").focus();
 }
 
 function eliminarDivision(id) {
-    // una división con divisiones especiales no se puede borrar
+    // una división no se borra si tiene divisiones especiales
     const especiales = obtenerDatos("divisionesEspeciales").filter((de) => de.idDivision === id);
 
     if (especiales.length > 0) {
@@ -635,9 +651,9 @@ function limpiarDivision() {
 }
 
 
-// ============================================================
+// ---------------------------------------------------------------
 // 9. DIVISIONES ESPECIALES
-// ============================================================
+// ---------------------------------------------------------------
 function mostrarDivisionesEspeciales() {
     const especiales = obtenerDatos("divisionesEspeciales");
     const divisiones = obtenerDatos("divisiones");
@@ -713,7 +729,7 @@ function editarDivisionEspecial(id) {
 }
 
 function eliminarDivisionEspecial(id) {
-    // si ya hay reclutas evaluados en esta división especial no se puede borrar
+    // no se borra si ya hay reclutas evaluados en ella
     const aptos = obtenerDatos("aptos").filter((a) => a.idDivisionEspecial === id);
 
     if (aptos.length > 0) {
@@ -738,9 +754,9 @@ function limpiarDivisionEspecial() {
 }
 
 
-// ============================================================
+// ---------------------------------------------------------------
 // 10. RECLUTAS
-// ============================================================
+// ---------------------------------------------------------------
 function mostrarReclutas() {
     const reclutas = obtenerDatos("reclutas");
     const ramas = obtenerDatos("ramas");
@@ -754,8 +770,8 @@ function mostrarReclutas() {
     }
 
     reclutas.forEach((r) => {
-        // la columna "Evaluado" dice Sí si el recluta tiene un registro en la lista de aptos.
-        // En Java esto era la relación @OneToOne entre Recluta y AptoDivisionEspecial
+        // la columna "Evaluado" dice Sí si el recluta aparece en la lista de aptos
+        // (find devuelve el elemento si lo encuentra o undefined si no, y undefined cuenta como falso)
         let evaluado = "—";
         if (aptos.find((a) => a.idRecluta === r.id)) {
             evaluado = "Sí";
@@ -800,8 +816,8 @@ function guardarRecluta() {
         return;
     }
 
-    // la altura y el peso son opcionales (en Java pueden ser null).
-    // Si el campo está vacío guardo null, si no lo paso a número
+    // la altura y el peso son opcionales (en el Java pueden ser null).
+    // Si el campo está vacío guardo null; si no, lo paso de texto a número
     let altura = null;
     if (alturaTexto !== "") {
         altura = Number(alturaTexto);
@@ -811,7 +827,7 @@ function guardarRecluta() {
         peso = Number(pesoTexto);
     }
 
-    // pero si los escribieron, tienen que ser mayores que 0
+    // si escribieron algo tiene que ser mayor que 0 (no tiene sentido una altura negativa)
     if ((altura !== null && altura <= 0) || (peso !== null && peso <= 0)) {
         mostrarMensaje("La altura y el peso deben ser mayores que 0", "error");
         return;
@@ -856,7 +872,7 @@ function editarRecluta(id) {
 }
 
 function eliminarRecluta(id) {
-    // si el recluta ya tiene una evaluación, primero hay que borrar esa evaluación
+    // si el recluta ya tiene una evaluación no lo dejo borrar
     const aptos = obtenerDatos("aptos").filter((a) => a.idRecluta === id);
 
     if (aptos.length > 0) {
@@ -883,11 +899,11 @@ function limpiarRecluta() {
 }
 
 
-// ============================================================
+// ---------------------------------------------------------------
 // 11. APTOS DIVISIÓN ESPECIAL
-// Aquí se asigna un recluta a una división especial y se guarda su
-// evaluación (apto o no, fecha y puntaje).
-// ============================================================
+// Aquí se registra la evaluación de un recluta en una división especial:
+// si es apto o no, la fecha y el puntaje.
+// ---------------------------------------------------------------
 function mostrarAptos() {
     const aptos = obtenerDatos("aptos");
     const reclutas = obtenerDatos("reclutas");
@@ -901,6 +917,7 @@ function mostrarAptos() {
     }
 
     aptos.forEach((a) => {
+        // busco el recluta completo para poder mostrar su nombre y no solo el id
         const recluta = reclutas.find((r) => r.id === a.idRecluta);
 
         cuerpo.innerHTML += `
@@ -921,14 +938,14 @@ function mostrarAptos() {
 }
 
 function guardarApto() {
-    const id = document.getElementById("aptoId").value;
-    const idRecluta = document.getElementById("aptoRecluta").value;
-    const idEspecial = document.getElementById("aptoDivEsp").value;
-    const fecha = document.getElementById("aptoFecha").value;
-    const puntajeTexto = document.getElementById("aptoPuntaje").value;
+    const id = document.getElementById("aptId").value;
+    const idRecluta = document.getElementById("aptRecluta").value;
+    const idEspecial = document.getElementById("aptEspecial").value;
+    const fecha = document.getElementById("aptFecha").value;
+    const puntajeTexto = document.getElementById("aptPuntaje").value;
 
-    // el checkbox no se lee con .value sino con .checked, que da true o false
-    const aptoServicio = document.getElementById("aptoServicio").checked;
+    // el checkbox no se lee con .value, se lee con .checked (da true o false)
+    const aptoServicio = document.getElementById("aptServicio").checked;
 
     if (idRecluta === "") {
         mostrarMensaje("Seleccione un recluta", "error");
@@ -939,7 +956,7 @@ function guardarApto() {
         return;
     }
     if (fecha === "") {
-        mostrarMensaje("Ingrese la fecha de evaluación", "error");
+        mostrarMensaje("Seleccione la fecha de evaluación", "error");
         return;
     }
     if (puntajeTexto === "") {
@@ -947,22 +964,20 @@ function guardarApto() {
         return;
     }
 
-    // el puntaje tiene que ser un entero entre 0 y 100.
-    // (puntaje % 1 !== 0 es una forma de revisar que no tenga decimales)
     const puntaje = Number(puntajeTexto);
-    if (puntaje < 0 || puntaje > 100 || puntaje % 1 !== 0) {
-        mostrarMensaje("El puntaje debe ser un número entero entre 0 y 100", "error");
+    if (puntaje < 0 || puntaje > 100) {
+        mostrarMensaje("El puntaje debe estar entre 0 y 100", "error");
         return;
     }
 
     const aptos = obtenerDatos("aptos");
 
-    // en Java la columna id_recluta era unique: un recluta solo puede tener UNA evaluación.
-    // Busco si ese recluta ya está en otra evaluación distinta a la que estoy editando.
-    // (si estoy creando, id es "" y Number("") da 0, así que ninguna coincide con 0)
+    // un recluta solo puede tener UNA evaluación (en el Java el id_recluta es unique).
+    // Busco si ya hay una evaluación de ese recluta, pero sin contar la que estoy editando
+    // (por eso comparo también que el id sea distinto)
     const repetido = aptos.find((a) => a.idRecluta === Number(idRecluta) && a.id !== Number(id));
     if (repetido) {
-        mostrarMensaje("Ese recluta ya tiene una evaluación", "error");
+        mostrarMensaje("Ese recluta ya tiene una evaluación registrada", "error");
         return;
     }
 
@@ -993,17 +1008,17 @@ function guardarApto() {
 
 function editarApto(id) {
     const apto = obtenerDatos("aptos").find((a) => a.id === id);
-    document.getElementById("aptoId").value = apto.id;
-    document.getElementById("aptoRecluta").value = apto.idRecluta;
-    document.getElementById("aptoDivEsp").value = apto.idDivisionEspecial;
-    document.getElementById("aptoFecha").value = apto.fechaEvaluacion;
-    document.getElementById("aptoPuntaje").value = apto.puntaje;
-    document.getElementById("aptoServicio").checked = apto.aptoServicio; // marca o desmarca el checkbox
-    document.getElementById("aptoPuntaje").focus();
+    document.getElementById("aptId").value = apto.id;
+    document.getElementById("aptRecluta").value = apto.idRecluta;
+    document.getElementById("aptEspecial").value = apto.idDivisionEspecial;
+    document.getElementById("aptFecha").value = apto.fechaEvaluacion;
+    document.getElementById("aptPuntaje").value = apto.puntaje;
+    document.getElementById("aptServicio").checked = apto.aptoServicio;
+    document.getElementById("aptRecluta").focus();
 }
 
 function eliminarApto(id) {
-    // la evaluación no tiene nada que dependa de ella, se puede borrar directo
+    // la evaluación no la usa ninguna otra tabla, entonces se puede borrar sin revisar nada
     if (confirm("¿Eliminar esta evaluación?")) {
         const aptos = obtenerDatos("aptos").filter((a) => a.id !== id);
         guardarDatos("aptos", aptos);
@@ -1014,109 +1029,109 @@ function eliminarApto(id) {
 }
 
 function limpiarApto() {
-    document.getElementById("aptoId").value = "";
-    document.getElementById("aptoRecluta").value = "";
-    document.getElementById("aptoDivEsp").value = "";
-    document.getElementById("aptoFecha").value = "";
-    document.getElementById("aptoPuntaje").value = "";
-    document.getElementById("aptoServicio").checked = false;
+    document.getElementById("aptId").value = "";
+    document.getElementById("aptRecluta").value = "";
+    document.getElementById("aptEspecial").value = "";
+    document.getElementById("aptFecha").value = "";
+    document.getElementById("aptPuntaje").value = "";
+    document.getElementById("aptServicio").checked = false;
 }
 
 
-// ============================================================
+// ---------------------------------------------------------------
 // 12. CONSULTAS
-// Son las mismas consultas que hacía el CrudService en Java con HQL,
-// pero aquí las hago a mano con filter y find.
-// ============================================================
+// Son las mismas búsquedas que tenía el CrudService del Java, pero hechas
+// con filter y find sobre los arreglos en vez de usar HQL.
+// ---------------------------------------------------------------
 
-// devuelve las evaluaciones de todas las divisiones especiales de UNA división.
-// Es el equivalente al JOIN de Java: aptos -> división especial -> división
-function obtenerAptosDeDivision(idDivision) {
-    const especiales = obtenerDatos("divisionesEspeciales");
-    const aptos = obtenerDatos("aptos");
-
-    // paso 1: me quedo con las divisiones especiales de esa división
-    // y con map saco solo sus ids, queda algo como [2, 3]
-    const idsEspeciales = especiales
-        .filter((de) => de.idDivision === idDivision)
-        .map((de) => de.id);
-
-    // paso 2: me quedo con los aptos cuya división especial esté en esa lista.
-    // includes responde true si el valor está dentro del arreglo
-    return aptos.filter((a) => idsEspeciales.includes(a.idDivisionEspecial));
-}
-
-// ----- consulta 1: soldados de una división o de una división especial -----
-
-// regla (igual que en la app de Java): si elijo una división se borra la división
-// especial, y al revés. Uso addEventListener con el evento "change" de los select
+// Reglas de los filtros de la consulta 1 (las mismas del Java):
+//   - se busca por división O por división especial, no por las dos a la vez
+//   - "solo aptos" solo se usa cuando se busca por división
+// Para eso uso addEventListener con el evento "change", que se dispara cuando
+// el usuario cambia lo que hay elegido en el select.
 document.getElementById("conDivision").addEventListener("change", () => {
+    // si eligió una división, borro la división especial
     if (document.getElementById("conDivision").value !== "") {
-        document.getElementById("conDivEsp").value = "";
+        document.getElementById("conEspecial").value = "";
         document.getElementById("conSoloAptos").disabled = false;
     }
 });
 
-document.getElementById("conDivEsp").addEventListener("change", () => {
-    const hayEspecial = document.getElementById("conDivEsp").value !== "";
-    if (hayEspecial) {
+document.getElementById("conEspecial").addEventListener("change", () => {
+    const especial = document.getElementById("conEspecial").value;
+
+    if (especial !== "") {
+        // si eligió una división especial, borro la división y apago "solo aptos"
         document.getElementById("conDivision").value = "";
+        document.getElementById("conSoloAptos").checked = false;
     }
-    // "Solo aptos" solo sirve para divisiones, así que lo bloqueo si hay una especial elegida
-    document.getElementById("conSoloAptos").disabled = hayEspecial;
+
+    // disabled = true deja el checkbox gris y no se puede tocar
+    document.getElementById("conSoloAptos").disabled = (especial !== "");
 });
 
+// ----- consulta 1: soldados de una división o división especial -----
 function buscarSoldados() {
     const idDivision = document.getElementById("conDivision").value;
-    const idEspecial = document.getElementById("conDivEsp").value;
+    const idEspecial = document.getElementById("conEspecial").value;
     const soloAptos = document.getElementById("conSoloAptos").checked;
 
-    let aptos = [];
+    const aptos = obtenerDatos("aptos");
+    const especiales = obtenerDatos("divisionesEspeciales");
+    const reclutas = obtenerDatos("reclutas");
+    const ramas = obtenerDatos("ramas");
+
+    // aquí guardo las evaluaciones que cumplen el filtro
+    // (los soldados "adscritos" son los que tienen una evaluación en esa división)
+    let aptosFiltrados = [];
 
     if (idEspecial !== "") {
-        // caso 1: eligió una división especial -> las evaluaciones de esa especial
-        aptos = obtenerDatos("aptos").filter((a) => a.idDivisionEspecial === Number(idEspecial));
+        // caso 1: por división especial. Las evaluaciones de esa división especial
+        aptosFiltrados = aptos.filter((a) => a.idDivisionEspecial === Number(idEspecial));
+
     } else if (idDivision !== "") {
-        // caso 2: eligió una división -> las de todas sus divisiones especiales
-        aptos = obtenerAptosDeDivision(Number(idDivision));
+        // caso 2: por división. Una evaluación es de esa división si SU división especial
+        // pertenece a la división elegida, entonces busco la división especial de cada una
+        aptosFiltrados = aptos.filter((a) => {
+            const especial = especiales.find((e) => e.id === a.idDivisionEspecial);
+            if (especial) {
+                return especial.idDivision === Number(idDivision);
+            }
+            return false;
+        });
+
+        // y si marcó "solo aptos" me quedo solo con los aptos para servicio
         if (soloAptos) {
-            aptos = aptos.filter((a) => a.aptoServicio === true);
+            aptosFiltrados = aptosFiltrados.filter((a) => a.aptoServicio === true);
         }
+
     } else {
         mostrarMensaje("Seleccione una división o una división especial", "error");
         return;
     }
 
-    // de cada evaluación saco el recluta (la evaluación solo guarda su id)
-    const reclutas = obtenerDatos("reclutas");
-    const soldados = [];
-    aptos.forEach((a) => {
+    // paso de evaluaciones a reclutas: por cada evaluación busco su recluta
+    const encontrados = [];
+    aptosFiltrados.forEach((a) => {
         const recluta = reclutas.find((r) => r.id === a.idRecluta);
         if (recluta) {
-            soldados.push(recluta);
+            encontrados.push(recluta);
         }
     });
 
-    // los ordeno por apellido y, si el apellido es igual, por nombre
-    soldados.sort((a, b) => {
-        if (a.apellido !== b.apellido) {
-            return a.apellido.localeCompare(b.apellido);
-        }
-        return a.nombre.localeCompare(b.nombre);
-    });
+    // los ordeno por apellido y nombre
+    encontrados.sort(compararReclutas);
 
-    // dibujo la tabla de resultados
-    const ramas = obtenerDatos("ramas");
     const cuerpo = document.getElementById("tablaSoldados");
     cuerpo.innerHTML = "";
 
-    if (soldados.length === 0) {
+    if (encontrados.length === 0) {
         cuerpo.innerHTML = `<tr><td colspan="6" class="vacio">No se encontraron soldados adscritos.</td></tr>`;
         mostrarMensaje("No se encontraron soldados adscritos", "error");
         return;
     }
 
-    soldados.forEach((r) => {
+    encontrados.forEach((r) => {
         cuerpo.innerHTML += `
             <tr>
                 <td class="mono">${r.id}</td>
@@ -1129,16 +1144,15 @@ function buscarSoldados() {
         `;
     });
 
-    mostrarMensaje("Soldados encontrados: " + soldados.length);
+    mostrarMensaje("Soldados encontrados: " + encontrados.length);
 }
 
-function limpiarConsulta() {
+function limpiarBusqueda() {
     document.getElementById("conDivision").value = "";
-    document.getElementById("conDivEsp").value = "";
+    document.getElementById("conEspecial").value = "";
     document.getElementById("conSoloAptos").checked = false;
     document.getElementById("conSoloAptos").disabled = false;
-    document.getElementById("tablaSoldados").innerHTML =
-        `<tr><td colspan="6" class="vacio">Elige una división o una división especial y pulsa buscar.</td></tr>`;
+    document.getElementById("tablaSoldados").innerHTML = "";
 }
 
 // ----- consulta 2: adscripciones detalladas de una división -----
@@ -1150,48 +1164,49 @@ function verAdscripciones() {
         return;
     }
 
-    const aptos = obtenerAptosDeDivision(Number(idDivision));
+    const aptos = obtenerDatos("aptos");
+    const especiales = obtenerDatos("divisionesEspeciales");
     const reclutas = obtenerDatos("reclutas");
     const ramas = obtenerDatos("ramas");
-    const especiales = obtenerDatos("divisionesEspeciales");
     const divisiones = obtenerDatos("divisiones");
 
-    // armo una lista de { apto, recluta } para poder ordenar por el apellido del recluta
-    const filas = aptos.map((a) => {
-        return { apto: a, recluta: reclutas.find((r) => r.id === a.idRecluta) };
+    // armo un arreglo de objetos que junta todo lo de cada evaluación
+    // (la evaluación, su recluta y su división especial) para poder ordenar fácil.
+    // Esto es como el JOIN FETCH del Java: unir varias tablas en una sola fila
+    const filas = [];
+    aptos.forEach((a) => {
+        const recluta = reclutas.find((r) => r.id === a.idRecluta);
+        const especial = especiales.find((e) => e.id === a.idDivisionEspecial);
+
+        // solo me sirve si existen los dos y la división especial es de la división elegida
+        if (recluta && especial && especial.idDivision === Number(idDivision)) {
+            filas.push({ apto: a, recluta: recluta, especial: especial });
+        }
     });
 
-    filas.sort((x, y) => {
-        if (x.recluta.apellido !== y.recluta.apellido) {
-            return x.recluta.apellido.localeCompare(y.recluta.apellido);
-        }
-        return x.recluta.nombre.localeCompare(y.recluta.nombre);
-    });
+    // ordeno por los datos del recluta (apellido y nombre)
+    filas.sort((x, y) => compararReclutas(x.recluta, y.recluta));
 
     const cuerpo = document.getElementById("tablaAdscripciones");
     cuerpo.innerHTML = "";
 
     if (filas.length === 0) {
-        cuerpo.innerHTML = `<tr><td colspan="8" class="vacio">No hay adscripciones para esta división.</td></tr>`;
+        cuerpo.innerHTML = `<tr><td colspan="8" class="vacio">No hay adscripciones para la división.</td></tr>`;
         mostrarMensaje("No hay adscripciones para la división", "error");
         return;
     }
 
-    filas.forEach((fila) => {
-        const a = fila.apto;
-        // para mostrar la división especial y su división busco cada una por su id
-        const especial = especiales.find((de) => de.id === a.idDivisionEspecial);
-
+    filas.forEach((f) => {
         cuerpo.innerHTML += `
             <tr>
-                <td class="mono">${a.id}</td>
-                <td>${nombreCompleto(fila.recluta)}</td>
-                <td>${nombreDe(ramas, fila.recluta.idRama)}</td>
-                <td>${nombreDe(especiales, a.idDivisionEspecial)}</td>
-                <td>${nombreDe(divisiones, especial.idDivision)}</td>
-                <td>${etiquetaApto(a.aptoServicio)}</td>
-                <td class="mono">${formatearFecha(a.fechaEvaluacion)}</td>
-                <td class="mono">${a.puntaje}</td>
+                <td class="mono">${f.apto.id}</td>
+                <td>${nombreCompleto(f.recluta)}</td>
+                <td>${nombreDe(ramas, f.recluta.idRama)}</td>
+                <td>${f.especial.nombre}</td>
+                <td>${nombreDe(divisiones, f.especial.idDivision)}</td>
+                <td>${etiquetaApto(f.apto.aptoServicio)}</td>
+                <td class="mono">${formatearFecha(f.apto.fechaEvaluacion)}</td>
+                <td class="mono">${f.apto.puntaje}</td>
             </tr>
         `;
     });
@@ -1199,18 +1214,18 @@ function verAdscripciones() {
     mostrarMensaje("Adscripciones encontradas: " + filas.length);
 }
 
-function limpiarDetalle() {
+function limpiarAdscripciones() {
     document.getElementById("conDivisionDetalle").value = "";
-    document.getElementById("tablaAdscripciones").innerHTML =
-        `<tr><td colspan="8" class="vacio">Elige una división y pulsa ver adscripciones.</td></tr>`;
+    document.getElementById("tablaAdscripciones").innerHTML = "";
 }
 
 
-// ============================================================
+// ---------------------------------------------------------------
 // 13. EXPORTAR A JSON
-// Junta todas las listas en un solo objeto y descarga un archivo .json
-// ============================================================
+// Descarga un archivo .json con todos los datos que hay guardados.
+// ---------------------------------------------------------------
 function exportarJSON() {
+    // junto las 5 listas en un solo objeto
     const datos = {
         ramas: obtenerDatos("ramas"),
         divisiones: obtenerDatos("divisiones"),
@@ -1219,16 +1234,16 @@ function exportarJSON() {
         aptos: obtenerDatos("aptos")
     };
 
-    // el 2 de JSON.stringify(datos, null, 2) es para que el archivo salga
-    // con sangría y se pueda leer, si no sale todo en una sola línea
+    // lo paso a texto. El null y el 2 son para que quede con sangría
+    // (de 2 espacios) y se pueda leer bien, si no saldría todo en una sola línea
     const texto = JSON.stringify(datos, null, 2);
 
-    // para descargar un archivo que no existe, hago esto:
-    // 1. Blob = un "archivo" que existe solo en la memoria, con el texto adentro
-    // 2. URL.createObjectURL le saca una dirección temporal
-    // 3. creo un enlace <a> invisible con esa dirección. "download" hace que el
-    //    navegador lo descargue con ese nombre en vez de abrirlo
-    // 4. click() simula que alguien le dio clic al enlace
+    // para descargar un archivo que no existe en ningún lado, lo creo en memoria:
+    //   1. Blob = un "archivo" en memoria con el texto adentro
+    //   2. createObjectURL = me da una dirección temporal para ese archivo
+    //   3. un enlace <a> con esa dirección en href y con "download" (que es el nombre del archivo)
+    //   4. .click() simula el clic en ese enlace y el navegador lo descarga
+    // el enlace nunca lo agrego a la página, solo existe para disparar la descarga
     const archivo = new Blob([texto], { type: "application/json" });
     const enlace = document.createElement("a");
     enlace.href = URL.createObjectURL(archivo);
@@ -1239,11 +1254,12 @@ function exportarJSON() {
 }
 
 
-// ============================================================
+// ---------------------------------------------------------------
 // 14. INICIO
 // Esto es lo primero que se ejecuta al abrir la página.
-// Como el script está al final del body, el HTML ya existe en este punto.
-// ============================================================
+// Como el script está al final del body, el html ya existe en este punto
+// (si no, getElementById daría null).
+// ---------------------------------------------------------------
 document.getElementById("fechaHoy").textContent = new Date().toLocaleDateString("es-CO");
 
 cargarDatosEjemplo();

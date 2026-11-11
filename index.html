@@ -2,15 +2,15 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <!-- esto hace que se vea bien en el celular -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>UNSC · Sistema de reclutamiento</title>
 
-    <!-- fuentes de google y los iconos (necesita internet para que carguen) -->
+    <!-- las fuentes de Google (Orbitron para los títulos, Rajdhani para el texto) y los iconos de Tabler.
+         Los dos se cargan de internet, por eso sin conexión se ve con otra letra y sin iconos -->
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=Rajdhani:wght@400;500;600&family=Share+Tech+Mono&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css">
 
-    <!-- mis estilos -->
+    <!-- mi css -->
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -29,11 +29,12 @@
             </div>
 
             <div class="encabezado__acciones">
-                <!-- el span de fechaHoy lo llena el JS con la fecha de hoy -->
+                <!-- la fecha de hoy la pone el JS dentro del span fechaHoy -->
                 <span class="estado">
                     <i class="ti ti-circle-filled"></i> Sesión activa · <span id="fechaHoy"></span>
                 </span>
-                <!-- onclick llama directo a la función que está en script.js -->
+
+                <!-- estos dos botones usan onclick directo, llaman a funciones del script.js -->
                 <button class="boton boton--secundario" onclick="exportarJSON()">
                     <i class="ti ti-download"></i> Exportar JSON
                 </button>
@@ -45,8 +46,8 @@
     </header>
 
     <!-- ========== MENÚ ==========
-         cada botón tiene un data-vista con el nombre de la sección que abre.
-         El JS lee ese valor y muestra la sección que tenga id="vista-" + ese nombre -->
+         el data-vista de cada botón es el nombre de la sección que abre.
+         El JS lo lee con boton.dataset.vista y lo junta con "vista-" para encontrar la sección -->
     <nav class="menu">
         <div class="contenedor menu__interno">
             <button class="menu__item activo" data-vista="panel"><i class="ti ti-layout-dashboard"></i> Panel</button>
@@ -60,15 +61,15 @@
     </nav>
 
     <!-- ========== CONTENIDO ==========
-         son 7 secciones (vistas), pero solo una se ve a la vez:
-         la que tiene la clase "activa". Las demás están ocultas por CSS -->
+         cada <section class="vista"> es una pantalla. Solo la que tiene la clase "activa" se ve,
+         las demás están ocultas con css (display: none) -->
     <main class="contenedor principal">
 
         <!-- ===== PANEL ===== -->
         <section class="vista activa" id="vista-panel">
             <h2 class="titulo-seccion">Panel de mando</h2>
 
-            <!-- las tarjetas, las barras y la tabla se dibujan desde el JS -->
+            <!-- las tarjetas, las barras y la tabla se llenan desde el JS, por eso están vacías aquí -->
             <div class="tarjetas" id="tarjetas"></div>
 
             <div class="rejilla-panel">
@@ -98,8 +99,7 @@
         </section>
 
         <!-- ===== RAMAS =====
-             las demás secciones de CRUD tienen la misma estructura:
-             un formulario arriba y la tabla abajo -->
+             las demás secciones tienen la misma estructura: un formulario arriba y una tabla abajo -->
         <section class="vista" id="vista-ramas">
             <h2 class="titulo-seccion">Ramas</h2>
 
@@ -108,7 +108,7 @@
                 <div class="formulario">
                     <div class="campo">
                         <label for="ramaId">ID</label>
-                        <!-- el ID es readonly porque se genera solo, no se escribe a mano -->
+                        <!-- el id es readonly porque lo genera el JS solo, el usuario no lo escribe -->
                         <input type="text" id="ramaId" placeholder="Automático" readonly>
                     </div>
                     <div class="campo">
@@ -160,7 +160,7 @@
                     </div>
                     <div class="campo">
                         <label for="divRama">Rama</label>
-                        <!-- las opciones de los select las mete el JS (función actualizarSelects) -->
+                        <!-- las opciones de este select las mete el JS (actualizarSelects) -->
                         <select id="divRama"></select>
                     </div>
                 </div>
@@ -251,7 +251,7 @@
                     </div>
                     <div class="campo">
                         <label for="recPeso">Peso (kg)</label>
-                        <!-- step="0.1" deja poner decimales, por ejemplo 62.5 -->
+                        <!-- step="0.1" deja poner decimales en el peso -->
                         <input type="number" id="recPeso" min="1" step="0.1">
                     </div>
                     <div class="campo">
@@ -278,8 +278,7 @@
             </article>
         </section>
 
-        <!-- ===== APTOS DIVISIÓN ESPECIAL =====
-             aquí se asigna un recluta a una división especial con su evaluación -->
+        <!-- ===== APTOS DIVISIÓN ESPECIAL ===== -->
         <section class="vista" id="vista-aptos">
             <h2 class="titulo-seccion">Aptos división especial</h2>
 
@@ -287,28 +286,29 @@
                 <h3 class="caja__titulo"><i class="ti ti-edit"></i> Formulario</h3>
                 <div class="formulario">
                     <div class="campo">
-                        <label for="aptoId">ID</label>
-                        <input type="text" id="aptoId" placeholder="Automático" readonly>
+                        <label for="aptId">ID</label>
+                        <input type="text" id="aptId" placeholder="Automático" readonly>
                     </div>
                     <div class="campo">
-                        <label for="aptoRecluta">Recluta</label>
-                        <select id="aptoRecluta"></select>
+                        <label for="aptRecluta">Recluta</label>
+                        <select id="aptRecluta"></select>
                     </div>
                     <div class="campo">
-                        <label for="aptoDivEsp">División especial</label>
-                        <select id="aptoDivEsp"></select>
+                        <label for="aptEspecial">División especial</label>
+                        <select id="aptEspecial"></select>
                     </div>
                     <div class="campo">
-                        <label for="aptoFecha">Fecha de evaluación</label>
-                        <input type="date" id="aptoFecha">
+                        <label for="aptFecha">Fecha de evaluación</label>
+                        <input type="date" id="aptFecha">
                     </div>
                     <div class="campo">
-                        <label for="aptoPuntaje">Puntaje (0 a 100)</label>
-                        <input type="number" id="aptoPuntaje" min="0" max="100">
+                        <label for="aptPuntaje">Puntaje (0 a 100)</label>
+                        <input type="number" id="aptPuntaje" min="0" max="100">
                     </div>
-                    <!-- el checkbox se lee con .checked en el JS (da true o false) -->
+                    <!-- el checkbox no usa .value, se lee con .checked (true o false) -->
                     <div class="campo campo--check">
-                        <label class="casilla"><input type="checkbox" id="aptoServicio"> Apto para servicio</label>
+                        <input type="checkbox" id="aptServicio">
+                        <label for="aptServicio">Apto para servicio</label>
                     </div>
                 </div>
                 <div class="acciones-form">
@@ -343,34 +343,30 @@
                         <select id="conDivision"></select>
                     </div>
                     <div class="campo">
-                        <label for="conDivEsp">División especial</label>
-                        <select id="conDivEsp"></select>
+                        <label for="conEspecial">División especial</label>
+                        <select id="conEspecial"></select>
                     </div>
                     <div class="campo campo--check">
-                        <label class="casilla"><input type="checkbox" id="conSoloAptos"> Solo soldados aptos</label>
+                        <input type="checkbox" id="conSoloAptos">
+                        <label for="conSoloAptos">Solo soldados aptos</label>
                     </div>
                 </div>
                 <div class="acciones-form">
                     <button class="boton boton--primario" onclick="buscarSoldados()"><i class="ti ti-search"></i> Buscar soldados</button>
-                    <button class="boton boton--secundario" onclick="limpiarConsulta()"><i class="ti ti-eraser"></i> Limpiar</button>
+                    <button class="boton boton--secundario" onclick="limpiarBusqueda()"><i class="ti ti-eraser"></i> Limpiar</button>
                 </div>
-            </article>
 
-            <article class="caja">
-                <h3 class="caja__titulo"><i class="ti ti-users"></i> Resultado</h3>
                 <div class="tabla-scroll">
                     <table class="tabla">
                         <thead>
                             <tr><th>ID</th><th>Nombre</th><th>Apellido</th><th>Altura</th><th>Peso</th><th>Rama</th></tr>
                         </thead>
-                        <tbody id="tablaSoldados">
-                            <tr><td colspan="6" class="vacio">Elige una división o una división especial y pulsa buscar.</td></tr>
-                        </tbody>
+                        <tbody id="tablaSoldados"></tbody>
                     </table>
                 </div>
             </article>
 
-            <!-- consulta 2: todas las adscripciones de una división, con más detalle -->
+            <!-- consulta 2: el detalle de las evaluaciones de una división -->
             <article class="caja">
                 <h3 class="caja__titulo"><i class="ti ti-list-details"></i> Adscripciones detalladas</h3>
                 <div class="formulario">
@@ -381,20 +377,15 @@
                 </div>
                 <div class="acciones-form">
                     <button class="boton boton--primario" onclick="verAdscripciones()"><i class="ti ti-eye"></i> Ver adscripciones</button>
-                    <button class="boton boton--secundario" onclick="limpiarDetalle()"><i class="ti ti-eraser"></i> Limpiar</button>
+                    <button class="boton boton--secundario" onclick="limpiarAdscripciones()"><i class="ti ti-eraser"></i> Limpiar</button>
                 </div>
-            </article>
 
-            <article class="caja">
-                <h3 class="caja__titulo"><i class="ti ti-clipboard-list"></i> Detalle</h3>
                 <div class="tabla-scroll">
                     <table class="tabla">
                         <thead>
-                            <tr><th>ID</th><th>Recluta</th><th>Rama</th><th>División especial</th><th>División</th><th>Apto</th><th>Fecha</th><th>Puntaje</th></tr>
+                            <tr><th>ID</th><th>Recluta</th><th>Rama</th><th>División especial</th><th>División</th><th>Apto servicio</th><th>Fecha</th><th>Puntaje</th></tr>
                         </thead>
-                        <tbody id="tablaAdscripciones">
-                            <tr><td colspan="8" class="vacio">Elige una división y pulsa ver adscripciones.</td></tr>
-                        </tbody>
+                        <tbody id="tablaAdscripciones"></tbody>
                     </table>
                 </div>
             </article>
@@ -408,7 +399,7 @@
         </div>
     </footer>
 
-    <!-- aquí es donde el JS mete los mensajes que salen abajo a la derecha -->
+    <!-- aquí es donde salen los mensajitos (los crea el JS con mostrarMensaje) -->
     <div class="avisos" id="avisos"></div>
 
     <!-- el script va al final del body para que el HTML ya esté cargado cuando corra -->

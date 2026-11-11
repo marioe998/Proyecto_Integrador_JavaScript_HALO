@@ -1,13 +1,11 @@
-/* ============================================================
-   UNSC · Sistema de reclutamiento
-   Estilos de toda la página (tema oscuro verde y dorado, tipo Halo)
-   ============================================================ */
+/* estilos del sistema de reclutamiento UNSC
+   la idea es el look de Halo: fondo oscuro, verde militar y dorado */
 
 
-/* ---------- VARIABLES ----------
-   Aquí guardo los colores y las fuentes una sola vez.
-   Después los uso con var(--nombre), así si quiero cambiar un color
-   lo cambio aquí y se cambia en toda la página. */
+/* ---------- variables ----------
+   guardo los colores y las fuentes aquí para no andar repitiendo los códigos
+   por todo el archivo. Si quiero cambiar un color lo cambio solo acá.
+   Después se usan así: var(--verde) */
 :root {
     --fondo: #0a0e0c;
     --panel: #111a15;
@@ -25,15 +23,12 @@
     --fuente-cuerpo: "Rajdhani", "Segoe UI", sans-serif;
     --fuente-mono: "Share Tech Mono", Consolas, monospace;
 
-    /* tamaño de la esquina cortada de botones y tarjetas */
+    /* tamaño del corte en diagonal de las esquinas (botones y tarjetas) */
     --corte: 10px;
 }
 
-
-/* ---------- BASE ---------- */
-
-/* quito los márgenes que trae el navegador por defecto.
-   box-sizing hace que el padding cuente dentro del ancho, si no se descuadra todo */
+/* reset: le quito los márgenes y paddings que trae el navegador
+   y con border-box el padding no agranda las cajas */
 * {
     box-sizing: border-box;
     margin: 0;
@@ -44,13 +39,14 @@ html {
     scroll-behavior: smooth;
 }
 
-/* el fondo tiene unas líneas verdes muy suaves que forman una cuadrícula.
-   Son dos gradientes (uno horizontal y otro vertical) repetidos cada 36px */
 body {
     min-height: 100vh;
+    /* flex en columna para que el footer quede abajo aunque haya poco contenido */
     display: flex;
     flex-direction: column;
     background-color: var(--fondo);
+    /* estas dos líneas con gradiente hacen la cuadrícula del fondo
+       (una vertical y otra horizontal, muy finitas) */
     background-image:
         linear-gradient(rgba(122, 163, 84, 0.045) 1px, transparent 1px),
         linear-gradient(90deg, rgba(122, 163, 84, 0.045) 1px, transparent 1px);
@@ -61,7 +57,7 @@ body {
     line-height: 1.5;
 }
 
-/* caja centrada con ancho máximo, para que en pantallas grandes no quede todo estirado */
+/* caja centrada que limita el ancho para que en pantallas grandes no se estire todo */
 .contenedor {
     width: 100%;
     max-width: 1200px;
@@ -70,20 +66,19 @@ body {
 }
 
 
-/* ---------- ENCABEZADO ---------- */
+/* ---------- encabezado ---------- */
 .encabezado {
     background: #070a08;
     border-bottom: 1px solid var(--borde);
     border-top: 3px solid var(--dorado);
 }
 
-/* flex-wrap deja que los elementos bajen de línea si no caben (en el celular) */
 .encabezado__interno {
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 16px;
-    flex-wrap: wrap;
+    flex-wrap: wrap; /* en celular se acomoda en varias filas */
     padding-top: 14px;
     padding-bottom: 14px;
 }
@@ -94,8 +89,7 @@ body {
     gap: 14px;
 }
 
-/* el emblema es un cuadrado girado 45° para que quede como rombo.
-   El icono de adentro lo giro -45° para que quede derecho otra vez */
+/* el emblema es un cuadrado girado 45° para que quede como rombo */
 .marca__emblema {
     width: 46px;
     height: 46px;
@@ -108,6 +102,7 @@ body {
     margin: 0 6px;
 }
 
+/* el icono de adentro lo giro al revés para que quede derecho */
 .marca__emblema i {
     transform: rotate(-45deg);
 }
@@ -149,10 +144,7 @@ body {
 }
 
 
-/* ---------- BOTONES ---------- */
-
-/* clip-path recorta el botón con un polígono para cortarle dos esquinas.
-   Los puntos van en orden, dando la vuelta por todo el borde */
+/* ---------- botones ---------- */
 .boton {
     display: inline-flex;
     align-items: center;
@@ -167,6 +159,8 @@ body {
     border: 1px solid var(--borde);
     background: transparent;
     color: var(--texto);
+    /* clip-path recorta la forma del botón: con estos puntos corto dos esquinas
+       en diagonal (arriba izquierda y abajo derecha) */
     clip-path: polygon(var(--corte) 0, 100% 0, 100% calc(100% - var(--corte)), calc(100% - var(--corte)) 100%, 0 100%, 0 var(--corte));
     transition: background-color 0.15s, color 0.15s, border-color 0.15s;
 }
@@ -198,31 +192,27 @@ body {
     color: #0a0e0c;
 }
 
-/* versión chiquita para los botones de Editar y Eliminar de las tablas.
-   Cambio la variable --corte solo aquí para que la esquina cortada sea más pequeña */
+/* versión chiquita para los botones de las tablas */
 .boton--pequeno {
-    --corte: 6px;
+    --corte: 6px; /* le cambio la variable solo a este botón para que el corte sea menor */
     padding: 4px 10px;
     font-size: 13px;
 }
 
 
-/* ---------- MENÚ ---------- */
-
-/* position: sticky hace que el menú se quede pegado arriba cuando bajas */
+/* ---------- menú ---------- */
 .menu {
     background: var(--panel);
     border-bottom: 1px solid var(--borde);
-    position: sticky;
+    position: sticky; /* se queda pegado arriba cuando se hace scroll */
     top: 0;
     z-index: 10;
 }
 
-/* overflow-x: auto = si no caben todos los botones, el menú se desliza de lado */
 .menu__interno {
     display: flex;
     gap: 2px;
-    overflow-x: auto;
+    overflow-x: auto; /* en celular el menú se desliza hacia los lados */
     scrollbar-width: thin;
 }
 
@@ -249,22 +239,21 @@ body {
     background: rgba(255, 255, 255, 0.03);
 }
 
-/* la pestaña donde estoy parado (el JS le pone esta clase) */
+/* la pestaña que está abierta (la clase "activo" la pone el JS) */
 .menu__item.activo {
     color: var(--dorado);
     border-bottom-color: var(--dorado);
 }
 
 
-/* ---------- SECCIONES (VISTAS) ---------- */
+/* ---------- contenido ---------- */
 .principal {
-    flex: 1;
+    flex: 1; /* ocupa todo el espacio libre y empuja el footer hacia abajo */
     padding-top: 28px;
     padding-bottom: 40px;
 }
 
-/* TRUCO IMPORTANTE: todas las vistas están ocultas (display: none)
-   y solo la que tiene la clase "activa" se muestra. El JS va cambiando esa clase */
+/* todas las secciones están ocultas, y solo se muestra la que tenga "activa" */
 .vista {
     display: none;
 }
@@ -274,7 +263,7 @@ body {
     animation: aparecer 0.25s ease;
 }
 
-/* animación chiquita: la sección aparece subiendo un poquito */
+/* animación chiquita para que la sección aparezca suave */
 @keyframes aparecer {
     from { opacity: 0; transform: translateY(6px); }
     to { opacity: 1; transform: translateY(0); }
@@ -293,18 +282,17 @@ body {
 }
 
 
-/* ---------- TARJETAS DE RESUMEN (PANEL) ---------- */
-
-/* grid con auto-fit y minmax: las tarjetas se acomodan solas,
-   caben tantas como se pueda con mínimo 170px cada una */
+/* ---------- tarjetas del panel ---------- */
 .tarjetas {
     display: grid;
+    /* auto-fit + minmax: caben las tarjetas que puedan con mínimo 170px y se reparten el resto */
     grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
     gap: 14px;
     margin-bottom: 22px;
 }
 
 .tarjeta {
+    position: relative;
     display: flex;
     align-items: center;
     gap: 14px;
@@ -312,10 +300,10 @@ body {
     background: var(--panel);
     border: 1px solid var(--borde);
     border-left: 4px solid var(--verde);
+    /* aquí corto solo la esquina de arriba a la derecha */
     clip-path: polygon(0 0, calc(100% - var(--corte)) 0, 100% var(--corte), 100% 100%, 0 100%);
 }
 
-/* variantes de color: solo cambian el borde izquierdo y el icono */
 .tarjeta--dorado { border-left-color: var(--dorado); }
 .tarjeta--cian { border-left-color: var(--cian); }
 
@@ -342,10 +330,8 @@ body {
 }
 
 
-/* ---------- CAJAS ---------- */
-
-/* el panel tiene dos columnas: la de las barras (5 partes) y la de la tabla (7 partes).
-   minmax(0, ...) evita que la tabla ensanche la columna y rompa el diseño */
+/* ---------- cajas (donde van formularios, tablas y gráfico) ---------- */
+/* el gráfico y la tabla del panel van uno al lado del otro (5 partes y 7 partes) */
 .rejilla-panel {
     display: grid;
     grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
@@ -359,8 +345,7 @@ body {
     clip-path: polygon(0 0, calc(100% - 14px) 0, 100% 14px, 100% 100%, 14px 100%, 0 calc(100% - 14px));
 }
 
-/* el + significa "una caja que viene justo después de otra caja":
-   así les doy espacio entre ellas sin tener que ponerle margen a todas */
+/* separación entre una caja y la que está justo debajo */
 .caja + .caja {
     margin-top: 18px;
 }
@@ -378,9 +363,7 @@ body {
 }
 
 
-/* ---------- GRÁFICO DE BARRAS (solo CSS) ----------
-   Cada barra es un div con fondo oscuro y otro div verde adentro.
-   El ancho del verde lo calcula el JS en porcentaje. */
+/* ---------- gráfico de barras (hecho solo con css, sin librerías) ---------- */
 .grafico {
     display: grid;
     gap: 16px;
@@ -399,17 +382,21 @@ body {
     border: 1px solid var(--borde);
 }
 
+/* el ancho de esta barra se lo pone el JS con style="width: ...%" */
 .barra__relleno {
     height: 100%;
     background: var(--verde);
 }
 
 
-/* ---------- TABLAS ---------- */
-
-/* si la tabla es muy ancha (celular), este contenedor deja deslizarla de lado */
+/* ---------- tablas ---------- */
 .tabla-scroll {
-    overflow-x: auto;
+    overflow-x: auto; /* si la tabla es muy ancha, sale una barrita para deslizar */
+}
+
+/* cuando la tabla va justo después de los botones le doy espacio arriba */
+.acciones-form + .tabla-scroll {
+    margin-top: 20px;
 }
 
 .tabla {
@@ -435,33 +422,31 @@ body {
     border-bottom: 1px solid rgba(38, 56, 45, 0.6);
 }
 
-/* la fila se ilumina un poquito cuando paso el mouse */
 .tabla tbody tr:hover {
     background: rgba(122, 163, 84, 0.06);
 }
 
-/* para números, ids y fechas (letra tipo máquina de escribir) */
+/* para ids, fechas y números: letra tipo máquina de escribir */
 .tabla td.mono {
     font-family: var(--fuente-mono);
     color: var(--texto-suave);
 }
 
-/* la celda de los botones Editar y Eliminar, pegada a la derecha */
+/* la celda de los botones Editar y Eliminar, alineada a la derecha */
 .tabla td.acciones {
     white-space: nowrap;
     text-align: right;
 }
 
-/* el mensaje cuando la tabla está vacía.
-   Lleva !important porque si no la regla de .tabla td le gana en prioridad */
+/* fila que sale cuando no hay datos ("No hay ramas registradas", etc.) */
 .vacio {
     text-align: center;
-    padding: 24px 10px !important;
+    padding: 24px 10px !important; /* el !important es para que le gane al padding de .tabla td */
     color: var(--texto-suave);
 }
 
 
-/* ---------- ETIQUETAS APTO / NO APTO ---------- */
+/* ---------- etiquetas de Apto / No apto ---------- */
 .etiqueta {
     display: inline-block;
     padding: 2px 10px;
@@ -485,11 +470,10 @@ body {
 }
 
 
-/* ---------- FORMULARIOS ---------- */
-
-/* mismo truco de auto-fit: los campos se acomodan solos según el ancho */
+/* ---------- formularios ---------- */
 .formulario {
     display: grid;
+    /* igual que las tarjetas: los campos se acomodan solos según el ancho de la pantalla */
     grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
     gap: 14px;
     margin-bottom: 16px;
@@ -508,7 +492,6 @@ body {
     color: var(--texto-suave);
 }
 
-/* color-scheme: dark hace que el calendario del input de fecha salga oscuro también */
 .campo input,
 .campo select {
     padding: 9px 10px;
@@ -517,18 +500,17 @@ body {
     color: var(--texto);
     font-family: var(--fuente-cuerpo);
     font-size: 16px;
-    color-scheme: dark;
+    color-scheme: dark; /* hace que el calendario y las flechitas del navegador salgan oscuros */
 }
 
-/* cuando hago clic en un campo se le pone el borde verde.
-   outline: none quita el borde azul feo que trae el navegador */
+/* al hacer clic en un campo se le pone el borde verde */
 .campo input:focus,
 .campo select:focus {
     outline: none;
     border-color: var(--verde);
 }
 
-/* el campo del ID (no se puede escribir) se ve apagadito */
+/* el campo del ID (no se puede escribir) se ve más apagado */
 .campo input[readonly] {
     color: var(--texto-suave);
     font-family: var(--fuente-mono);
@@ -538,29 +520,27 @@ body {
     background: var(--panel);
 }
 
-/* el checkbox va alineado abajo para quedar a la altura de los otros campos */
+/* el campo del checkbox: el cuadrito y el texto en la misma fila */
 .campo--check {
-    justify-content: flex-end;
+    flex-direction: row;
+    align-items: center;
+    align-self: end; /* lo bajo para que quede alineado con los otros campos */
+    padding-bottom: 8px;
+    gap: 10px;
 }
 
-/* repito .campo label porque si no la regla de arriba (mayúsculas, gris) le gana */
-.campo label.casilla {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 9px 0;
+.campo--check input {
+    width: 20px;
+    height: 20px;
+    padding: 0;
+    accent-color: var(--verde); /* color del check al marcarlo */
+}
+
+.campo--check label {
     font-size: 16px;
-    letter-spacing: normal;
+    letter-spacing: 0;
     text-transform: none;
     color: var(--texto);
-    cursor: pointer;
-}
-
-/* accent-color pinta el checkbox del verde de la página */
-.casilla input {
-    width: 18px;
-    height: 18px;
-    accent-color: var(--verde);
 }
 
 .acciones-form {
@@ -570,7 +550,7 @@ body {
 }
 
 
-/* ---------- PIE DE PÁGINA ---------- */
+/* ---------- pie de página ---------- */
 .pie {
     padding: 16px 0;
     border-top: 1px solid var(--borde);
@@ -582,9 +562,8 @@ body {
 }
 
 
-/* ---------- MENSAJES EMERGENTES ----------
-   position: fixed los deja pegados a la esquina de abajo a la derecha
-   aunque uno haga scroll */
+/* ---------- mensajes emergentes ---------- */
+/* position: fixed lo deja pegado abajo a la derecha aunque se haga scroll */
 .avisos {
     position: fixed;
     right: 20px;
@@ -611,17 +590,14 @@ body {
 .aviso--error { border-left-color: var(--rojo); }
 
 
-/* ---------- RESPONSIVE ----------
-   @media = estas reglas solo se aplican cuando la pantalla es más pequeña */
-
-/* tablets: el panel pasa de dos columnas a una */
+/* ---------- responsive (celulares y pantallas chicas) ---------- */
+/* en pantallas de menos de 860px el panel pasa a una sola columna */
 @media (max-width: 860px) {
     .rejilla-panel {
         grid-template-columns: minmax(0, 1fr);
     }
 }
 
-/* celulares: letras un poco más chicas */
 @media (max-width: 560px) {
     body { font-size: 16px; }
     .encabezado__interno { justify-content: center; }
