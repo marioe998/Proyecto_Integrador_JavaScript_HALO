@@ -89,27 +89,183 @@
             </div>
         </section>
 
-        <!-- SECCIONES PENDIENTES (se completan en las próximas entregas) -->
+        <!-- ===== RAMAS ===== -->
         <section class="vista" id="vista-ramas">
             <h2 class="titulo-seccion">Ramas</h2>
-            <div class="pendiente"><i class="ti ti-tools"></i> Módulo en construcción.</div>
+
+            <article class="caja">
+                <h3 class="caja__titulo"><i class="ti ti-edit"></i> Formulario</h3>
+                <div class="formulario">
+                    <div class="campo">
+                        <label for="ramaId">ID</label>
+                        <input type="text" id="ramaId" placeholder="Automático" readonly>
+                    </div>
+                    <div class="campo">
+                        <label for="ramaNombre">Nombre</label>
+                        <input type="text" id="ramaNombre">
+                    </div>
+                    <div class="campo">
+                        <label for="ramaDescripcion">Descripción</label>
+                        <input type="text" id="ramaDescripcion">
+                    </div>
+                </div>
+                <div class="acciones-form">
+                    <button class="boton boton--primario" onclick="guardarRama()"><i class="ti ti-device-floppy"></i> Guardar</button>
+                    <button class="boton boton--secundario" onclick="limpiarRama()"><i class="ti ti-eraser"></i> Limpiar</button>
+                </div>
+            </article>
+
+            <article class="caja">
+                <h3 class="caja__titulo"><i class="ti ti-list"></i> Listado</h3>
+                <div class="tabla-scroll">
+                    <table class="tabla">
+                        <thead>
+                            <tr><th>ID</th><th>Nombre</th><th>Descripción</th><th></th></tr>
+                        </thead>
+                        <tbody id="tablaRamas"></tbody>
+                    </table>
+                </div>
+            </article>
         </section>
 
+        <!-- ===== DIVISIONES ===== -->
         <section class="vista" id="vista-divisiones">
             <h2 class="titulo-seccion">Divisiones</h2>
-            <div class="pendiente"><i class="ti ti-tools"></i> Módulo en construcción.</div>
+
+            <article class="caja">
+                <h3 class="caja__titulo"><i class="ti ti-edit"></i> Formulario</h3>
+                <div class="formulario">
+                    <div class="campo">
+                        <label for="divId">ID</label>
+                        <input type="text" id="divId" placeholder="Automático" readonly>
+                    </div>
+                    <div class="campo">
+                        <label for="divNombre">Nombre</label>
+                        <input type="text" id="divNombre">
+                    </div>
+                    <div class="campo">
+                        <label for="divDescripcion">Descripción</label>
+                        <input type="text" id="divDescripcion">
+                    </div>
+                    <div class="campo">
+                        <label for="divRama">Rama</label>
+                        <select id="divRama"></select>
+                    </div>
+                </div>
+                <div class="acciones-form">
+                    <button class="boton boton--primario" onclick="guardarDivision()"><i class="ti ti-device-floppy"></i> Guardar</button>
+                    <button class="boton boton--secundario" onclick="limpiarDivision()"><i class="ti ti-eraser"></i> Limpiar</button>
+                </div>
+            </article>
+
+            <article class="caja">
+                <h3 class="caja__titulo"><i class="ti ti-list"></i> Listado</h3>
+                <div class="tabla-scroll">
+                    <table class="tabla">
+                        <thead>
+                            <tr><th>ID</th><th>Nombre</th><th>Descripción</th><th>Rama</th><th></th></tr>
+                        </thead>
+                        <tbody id="tablaDivisiones"></tbody>
+                    </table>
+                </div>
+            </article>
         </section>
 
+        <!-- ===== DIVISIONES ESPECIALES ===== -->
         <section class="vista" id="vista-divisiones-especiales">
             <h2 class="titulo-seccion">Divisiones especiales</h2>
-            <div class="pendiente"><i class="ti ti-tools"></i> Módulo en construcción.</div>
+
+            <article class="caja">
+                <h3 class="caja__titulo"><i class="ti ti-edit"></i> Formulario</h3>
+                <div class="formulario">
+                    <div class="campo">
+                        <label for="deId">ID</label>
+                        <input type="text" id="deId" placeholder="Automático" readonly>
+                    </div>
+                    <div class="campo">
+                        <label for="deNombre">Nombre</label>
+                        <input type="text" id="deNombre">
+                    </div>
+                    <div class="campo">
+                        <label for="deDescripcion">Descripción</label>
+                        <input type="text" id="deDescripcion">
+                    </div>
+                    <div class="campo">
+                        <label for="deDivision">División</label>
+                        <select id="deDivision"></select>
+                    </div>
+                </div>
+                <div class="acciones-form">
+                    <button class="boton boton--primario" onclick="guardarDivisionEspecial()"><i class="ti ti-device-floppy"></i> Guardar</button>
+                    <button class="boton boton--secundario" onclick="limpiarDivisionEspecial()"><i class="ti ti-eraser"></i> Limpiar</button>
+                </div>
+            </article>
+
+            <article class="caja">
+                <h3 class="caja__titulo"><i class="ti ti-list"></i> Listado</h3>
+                <div class="tabla-scroll">
+                    <table class="tabla">
+                        <thead>
+                            <tr><th>ID</th><th>Nombre</th><th>Descripción</th><th>División</th><th></th></tr>
+                        </thead>
+                        <tbody id="tablaDivisionesEspeciales"></tbody>
+                    </table>
+                </div>
+            </article>
         </section>
 
+        <!-- ===== RECLUTAS ===== -->
         <section class="vista" id="vista-reclutas">
             <h2 class="titulo-seccion">Reclutas</h2>
-            <div class="pendiente"><i class="ti ti-tools"></i> Módulo en construcción.</div>
+
+            <article class="caja">
+                <h3 class="caja__titulo"><i class="ti ti-edit"></i> Formulario</h3>
+                <div class="formulario">
+                    <div class="campo">
+                        <label for="recId">ID</label>
+                        <input type="text" id="recId" placeholder="Automático" readonly>
+                    </div>
+                    <div class="campo">
+                        <label for="recNombre">Nombre</label>
+                        <input type="text" id="recNombre">
+                    </div>
+                    <div class="campo">
+                        <label for="recApellido">Apellido</label>
+                        <input type="text" id="recApellido">
+                    </div>
+                    <div class="campo">
+                        <label for="recAltura">Altura (cm)</label>
+                        <input type="number" id="recAltura" min="1">
+                    </div>
+                    <div class="campo">
+                        <label for="recPeso">Peso (kg)</label>
+                        <input type="number" id="recPeso" min="1" step="0.1">
+                    </div>
+                    <div class="campo">
+                        <label for="recRama">Rama</label>
+                        <select id="recRama"></select>
+                    </div>
+                </div>
+                <div class="acciones-form">
+                    <button class="boton boton--primario" onclick="guardarRecluta()"><i class="ti ti-device-floppy"></i> Guardar</button>
+                    <button class="boton boton--secundario" onclick="limpiarRecluta()"><i class="ti ti-eraser"></i> Limpiar</button>
+                </div>
+            </article>
+
+            <article class="caja">
+                <h3 class="caja__titulo"><i class="ti ti-list"></i> Listado</h3>
+                <div class="tabla-scroll">
+                    <table class="tabla">
+                        <thead>
+                            <tr><th>ID</th><th>Nombre</th><th>Apellido</th><th>Altura</th><th>Peso</th><th>Rama</th><th>Evaluado</th><th></th></tr>
+                        </thead>
+                        <tbody id="tablaReclutas"></tbody>
+                    </table>
+                </div>
+            </article>
         </section>
 
+        <!-- SECCIONES PENDIENTES (se completan en la última entrega) -->
         <section class="vista" id="vista-aptos">
             <h2 class="titulo-seccion">Aptos división especial</h2>
             <div class="pendiente"><i class="ti ti-tools"></i> Módulo en construcción.</div>

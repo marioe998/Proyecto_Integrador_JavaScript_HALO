@@ -1,6 +1,7 @@
 // ============================================================
 // UNSC · Sistema de reclutamiento (versión simple)
-// Parte 1: datos en localStorage, menú y panel principal
+// Panel, menú y CRUD de Ramas, Divisiones, Divisiones especiales
+// y Reclutas. Todo se guarda en localStorage como JSON.
 // ============================================================
 
 
@@ -87,7 +88,11 @@ function restablecerDatos() {
     const seguro = confirm("Se borrarán los cambios y se cargarán los datos de ejemplo. ¿Continuar?");
     if (seguro) {
         guardarEjemplos();
-        mostrarPanel();
+        limpiarRama();
+        limpiarDivision();
+        limpiarDivisionEspecial();
+        limpiarRecluta();
+        mostrarTodo();
         mostrarMensaje("Datos restablecidos");
     }
 }
@@ -95,10 +100,16 @@ function restablecerDatos() {
 
 // ------------------------------------------------------------
 // 3. MENSAJE EMERGENTE
+// Si se le pasa "error" como segundo valor, sale en rojo.
 // ------------------------------------------------------------
-function mostrarMensaje(texto) {
+function mostrarMensaje(texto, tipo) {
     const aviso = document.createElement("div");
     aviso.className = "aviso";
+    if (tipo === "error") {
+        aviso.classList.add("aviso--error");
+    } else {
+        aviso.classList.add("aviso--exito");
+    }
     aviso.textContent = texto;
     document.getElementById("avisos").appendChild(aviso);
 
@@ -118,6 +129,9 @@ function mostrarVista(nombre) {
     // Se la ponemos solo a la que se eligió
     document.getElementById(`vista-${nombre}`).classList.add("activa");
     document.querySelector(`[data-vista="${nombre}"]`).classList.add("activo");
+
+    // Al cambiar de pestaña se refresca todo (panel, tablas y listas desplegables)
+    mostrarTodo();
 }
 
 // Cada botón del menú escucha el evento "click"
@@ -129,7 +143,76 @@ document.querySelectorAll(".menu__item").forEach((boton) => {
 
 
 // ------------------------------------------------------------
-// 5. PANEL PRINCIPAL
+// 5. FUNCIONES DE AYUDA (las usan varios módulos)
+// ------------------------------------------------------------
+
+// Devuelve el siguiente id: el mayor que exista + 1
+function siguienteId(lista) {
+    let mayor = 0;
+    lista.forEach((item) => {
+        if (item.id > mayor) {
+            mayor = item.id;
+        }
+    });
+    return mayor + 1;
+}
+
+// Busca un elemento por id y devuelve su nombre ("—" si no existe)
+function nombreDe(lista, id) {
+    const item = lista.find((x) => x.id === id);
+    if (item) {
+        return item.nombre;
+    }
+    return "—";
+}
+
+// Si el valor está vacío muestra un guion
+function valorOGuion(valor) {
+    if (valor === null || valor === "") {
+        return "—";
+    }
+    return valor;
+}
+
+// Llena un <select> con opciones. "opciones" es un arreglo de { id, texto }
+function llenarSelect(idSelect, opciones, textoInicial) {
+    const select = document.getElementById(idSelect);
+    const anterior = select.value; // para no perder lo que ya estaba elegido
+
+    select.innerHTML = `<option value="">${textoInicial}</option>`;
+    opciones.forEach((o) => {
+        select.innerHTML += `<option value="${o.id}">${o.texto}</option>`;
+    });
+    select.value = anterior;
+}
+
+function actualizarSelects() {
+    const ramas = obtenerDatos("ramas");
+    const divisiones = obtenerDatos("divisiones");
+
+    const opcionesRamas = ramas.map((r) => ({ id: r.id, texto: r.nombre }));
+    const opcionesDivisiones = divisiones.map((d) => ({
+        id: d.id,
+        texto: `${d.nombre} (${nombreDe(ramas, d.idRama)})`
+    }));
+
+    llenarSelect("divRama", opcionesRamas, "Seleccione una rama");
+    llenarSelect("recRama", opcionesRamas, "Seleccione una rama");
+    llenarSelect("deDivision", opcionesDivisiones, "Seleccione una división");
+}
+
+function mostrarTodo() {
+    mostrarPanel();
+    mostrarRamas();
+    mostrarDivisiones();
+    mostrarDivisionesEspeciales();
+    mostrarReclutas();
+    actualizarSelects();
+}
+
+
+// ------------------------------------------------------------
+// 6. PANEL PRINCIPAL
 // ------------------------------------------------------------
 
 // ----- Tarjetas de resumen -----
@@ -234,17 +317,13 @@ function mostrarEvaluaciones() {
     ultimos.forEach((apto) => {
         // find: buscamos el recluta y la división especial por su id
         const recluta = reclutas.find((r) => r.id === apto.idRecluta);
-        const division = divisionesEspeciales.find((d) => d.id === apto.idDivisionEspecial);
 
         let nombre = "—";
         if (recluta) {
             nombre = `${recluta.nombre} ${recluta.apellido}`;
         }
 
-        let nombreDivision = "—";
-        if (division) {
-            nombreDivision = division.nombre;
-        }
+        const nombreDivision = nombreDe(divisionesEspeciales, apto.idDivisionEspecial);
 
         // La fecha viene como 2026-10-02 y la mostramos como 02/10/2026
         const partes = apto.fechaEvaluacion.split("-");
@@ -275,7 +354,449 @@ function mostrarPanel() {
 
 
 // ------------------------------------------------------------
-// 6. EXPORTAR A JSON
+// 7. RAMAS
+// Todos los módulos siguen el mismo patrón:
+//   mostrarX()  -> dibuja la tabla
+//   guardarX()  -> crea (si no hay ID) o actualiza (si hay ID)
+//   editarX()   -> pasa los datos de la fila al formulario
+//   eliminarX() -> borra, si no tiene datos relacionados
+//   limpiarX()  -> vacía el formulario
+// ------------------------------------------------------------
+function mostrarRamas() {
+    const ramas = obtenerDatos("ramas");
+    const cuerpo = document.getElementById("tablaRamas");
+    cuerpo.innerHTML = "";
+
+    if (ramas.length === 0) {
+        cuerpo.innerHTML = `<tr><td colspan="4" class="vacio">No hay ramas registradas.</td></tr>`;
+        return;
+    }
+
+    ramas.forEach((r) => {
+        cuerpo.innerHTML += `
+            <tr>
+                <td class="mono">${r.id}</td>
+                <td>${r.nombre}</td>
+                <td>${valorOGuion(r.descripcion)}</td>
+                <td class="acciones">
+                    <button class="boton boton--pequeno boton--secundario" onclick="editarRama(${r.id})"><i class="ti ti-edit"></i> Editar</button>
+                    <button class="boton boton--pequeno boton--peligro" onclick="eliminarRama(${r.id})"><i class="ti ti-trash"></i> Eliminar</button>
+                </td>
+            </tr>
+        `;
+    });
+}
+
+function guardarRama() {
+    const id = document.getElementById("ramaId").value;
+    const nombre = document.getElementById("ramaNombre").value.trim();
+    const descripcion = document.getElementById("ramaDescripcion").value.trim();
+
+    if (nombre === "") {
+        mostrarMensaje("Ingrese el nombre de la rama", "error");
+        return;
+    }
+
+    const ramas = obtenerDatos("ramas");
+
+    if (id === "") {
+        // Crear: se agrega un objeto nuevo al arreglo
+        ramas.push({ id: siguienteId(ramas), nombre: nombre, descripcion: descripcion });
+        mostrarMensaje("Rama guardada");
+    } else {
+        // Actualizar: buscamos la rama y cambiamos sus datos
+        const rama = ramas.find((r) => r.id === Number(id));
+        rama.nombre = nombre;
+        rama.descripcion = descripcion;
+        mostrarMensaje("Rama actualizada");
+    }
+
+    guardarDatos("ramas", ramas);
+    limpiarRama();
+    mostrarTodo();
+}
+
+function editarRama(id) {
+    const rama = obtenerDatos("ramas").find((r) => r.id === id);
+    document.getElementById("ramaId").value = rama.id;
+    document.getElementById("ramaNombre").value = rama.nombre;
+    document.getElementById("ramaDescripcion").value = rama.descripcion;
+    document.getElementById("ramaNombre").focus();
+}
+
+function eliminarRama(id) {
+    // No se puede borrar una rama si otras tablas dependen de ella
+    const divisiones = obtenerDatos("divisiones").filter((d) => d.idRama === id);
+    const reclutas = obtenerDatos("reclutas").filter((r) => r.idRama === id);
+
+    if (divisiones.length > 0 || reclutas.length > 0) {
+        mostrarMensaje("No se puede eliminar: la rama tiene divisiones o reclutas", "error");
+        return;
+    }
+
+    if (confirm("¿Eliminar esta rama?")) {
+        // filter: nos quedamos con todas las ramas MENOS la que se borra
+        const ramas = obtenerDatos("ramas").filter((r) => r.id !== id);
+        guardarDatos("ramas", ramas);
+        limpiarRama();
+        mostrarTodo();
+        mostrarMensaje("Rama eliminada");
+    }
+}
+
+function limpiarRama() {
+    document.getElementById("ramaId").value = "";
+    document.getElementById("ramaNombre").value = "";
+    document.getElementById("ramaDescripcion").value = "";
+}
+
+
+// ------------------------------------------------------------
+// 8. DIVISIONES
+// ------------------------------------------------------------
+function mostrarDivisiones() {
+    const divisiones = obtenerDatos("divisiones");
+    const ramas = obtenerDatos("ramas");
+    const cuerpo = document.getElementById("tablaDivisiones");
+    cuerpo.innerHTML = "";
+
+    if (divisiones.length === 0) {
+        cuerpo.innerHTML = `<tr><td colspan="5" class="vacio">No hay divisiones registradas.</td></tr>`;
+        return;
+    }
+
+    divisiones.forEach((d) => {
+        cuerpo.innerHTML += `
+            <tr>
+                <td class="mono">${d.id}</td>
+                <td>${d.nombre}</td>
+                <td>${valorOGuion(d.descripcion)}</td>
+                <td>${nombreDe(ramas, d.idRama)}</td>
+                <td class="acciones">
+                    <button class="boton boton--pequeno boton--secundario" onclick="editarDivision(${d.id})"><i class="ti ti-edit"></i> Editar</button>
+                    <button class="boton boton--pequeno boton--peligro" onclick="eliminarDivision(${d.id})"><i class="ti ti-trash"></i> Eliminar</button>
+                </td>
+            </tr>
+        `;
+    });
+}
+
+function guardarDivision() {
+    const id = document.getElementById("divId").value;
+    const nombre = document.getElementById("divNombre").value.trim();
+    const descripcion = document.getElementById("divDescripcion").value.trim();
+    const idRama = document.getElementById("divRama").value;
+
+    if (nombre === "") {
+        mostrarMensaje("Ingrese el nombre de la división", "error");
+        return;
+    }
+    if (idRama === "") {
+        mostrarMensaje("Seleccione una rama", "error");
+        return;
+    }
+
+    const divisiones = obtenerDatos("divisiones");
+
+    if (id === "") {
+        divisiones.push({
+            id: siguienteId(divisiones),
+            nombre: nombre,
+            descripcion: descripcion,
+            idRama: Number(idRama)
+        });
+        mostrarMensaje("División guardada");
+    } else {
+        const division = divisiones.find((d) => d.id === Number(id));
+        division.nombre = nombre;
+        division.descripcion = descripcion;
+        division.idRama = Number(idRama);
+        mostrarMensaje("División actualizada");
+    }
+
+    guardarDatos("divisiones", divisiones);
+    limpiarDivision();
+    mostrarTodo();
+}
+
+function editarDivision(id) {
+    const division = obtenerDatos("divisiones").find((d) => d.id === id);
+    document.getElementById("divId").value = division.id;
+    document.getElementById("divNombre").value = division.nombre;
+    document.getElementById("divDescripcion").value = division.descripcion;
+    document.getElementById("divRama").value = division.idRama;
+    document.getElementById("divNombre").focus();
+}
+
+function eliminarDivision(id) {
+    const especiales = obtenerDatos("divisionesEspeciales").filter((de) => de.idDivision === id);
+
+    if (especiales.length > 0) {
+        mostrarMensaje("No se puede eliminar: la división tiene divisiones especiales", "error");
+        return;
+    }
+
+    if (confirm("¿Eliminar esta división?")) {
+        const divisiones = obtenerDatos("divisiones").filter((d) => d.id !== id);
+        guardarDatos("divisiones", divisiones);
+        limpiarDivision();
+        mostrarTodo();
+        mostrarMensaje("División eliminada");
+    }
+}
+
+function limpiarDivision() {
+    document.getElementById("divId").value = "";
+    document.getElementById("divNombre").value = "";
+    document.getElementById("divDescripcion").value = "";
+    document.getElementById("divRama").value = "";
+}
+
+
+// ------------------------------------------------------------
+// 9. DIVISIONES ESPECIALES
+// ------------------------------------------------------------
+function mostrarDivisionesEspeciales() {
+    const especiales = obtenerDatos("divisionesEspeciales");
+    const divisiones = obtenerDatos("divisiones");
+    const cuerpo = document.getElementById("tablaDivisionesEspeciales");
+    cuerpo.innerHTML = "";
+
+    if (especiales.length === 0) {
+        cuerpo.innerHTML = `<tr><td colspan="5" class="vacio">No hay divisiones especiales registradas.</td></tr>`;
+        return;
+    }
+
+    especiales.forEach((de) => {
+        cuerpo.innerHTML += `
+            <tr>
+                <td class="mono">${de.id}</td>
+                <td>${de.nombre}</td>
+                <td>${valorOGuion(de.descripcion)}</td>
+                <td>${nombreDe(divisiones, de.idDivision)}</td>
+                <td class="acciones">
+                    <button class="boton boton--pequeno boton--secundario" onclick="editarDivisionEspecial(${de.id})"><i class="ti ti-edit"></i> Editar</button>
+                    <button class="boton boton--pequeno boton--peligro" onclick="eliminarDivisionEspecial(${de.id})"><i class="ti ti-trash"></i> Eliminar</button>
+                </td>
+            </tr>
+        `;
+    });
+}
+
+function guardarDivisionEspecial() {
+    const id = document.getElementById("deId").value;
+    const nombre = document.getElementById("deNombre").value.trim();
+    const descripcion = document.getElementById("deDescripcion").value.trim();
+    const idDivision = document.getElementById("deDivision").value;
+
+    if (nombre === "") {
+        mostrarMensaje("Ingrese el nombre de la división especial", "error");
+        return;
+    }
+    if (idDivision === "") {
+        mostrarMensaje("Seleccione una división", "error");
+        return;
+    }
+
+    const especiales = obtenerDatos("divisionesEspeciales");
+
+    if (id === "") {
+        especiales.push({
+            id: siguienteId(especiales),
+            nombre: nombre,
+            descripcion: descripcion,
+            idDivision: Number(idDivision)
+        });
+        mostrarMensaje("División especial guardada");
+    } else {
+        const especial = especiales.find((de) => de.id === Number(id));
+        especial.nombre = nombre;
+        especial.descripcion = descripcion;
+        especial.idDivision = Number(idDivision);
+        mostrarMensaje("División especial actualizada");
+    }
+
+    guardarDatos("divisionesEspeciales", especiales);
+    limpiarDivisionEspecial();
+    mostrarTodo();
+}
+
+function editarDivisionEspecial(id) {
+    const especial = obtenerDatos("divisionesEspeciales").find((de) => de.id === id);
+    document.getElementById("deId").value = especial.id;
+    document.getElementById("deNombre").value = especial.nombre;
+    document.getElementById("deDescripcion").value = especial.descripcion;
+    document.getElementById("deDivision").value = especial.idDivision;
+    document.getElementById("deNombre").focus();
+}
+
+function eliminarDivisionEspecial(id) {
+    const aptos = obtenerDatos("aptos").filter((a) => a.idDivisionEspecial === id);
+
+    if (aptos.length > 0) {
+        mostrarMensaje("No se puede eliminar: tiene reclutas evaluados", "error");
+        return;
+    }
+
+    if (confirm("¿Eliminar esta división especial?")) {
+        const especiales = obtenerDatos("divisionesEspeciales").filter((de) => de.id !== id);
+        guardarDatos("divisionesEspeciales", especiales);
+        limpiarDivisionEspecial();
+        mostrarTodo();
+        mostrarMensaje("División especial eliminada");
+    }
+}
+
+function limpiarDivisionEspecial() {
+    document.getElementById("deId").value = "";
+    document.getElementById("deNombre").value = "";
+    document.getElementById("deDescripcion").value = "";
+    document.getElementById("deDivision").value = "";
+}
+
+
+// ------------------------------------------------------------
+// 10. RECLUTAS
+// ------------------------------------------------------------
+function mostrarReclutas() {
+    const reclutas = obtenerDatos("reclutas");
+    const ramas = obtenerDatos("ramas");
+    const aptos = obtenerDatos("aptos");
+    const cuerpo = document.getElementById("tablaReclutas");
+    cuerpo.innerHTML = "";
+
+    if (reclutas.length === 0) {
+        cuerpo.innerHTML = `<tr><td colspan="8" class="vacio">No hay reclutas registrados.</td></tr>`;
+        return;
+    }
+
+    reclutas.forEach((r) => {
+        // "Evaluado" es Sí si el recluta tiene un registro en la tabla de aptos
+        let evaluado = "—";
+        if (aptos.find((a) => a.idRecluta === r.id)) {
+            evaluado = "Sí";
+        }
+
+        cuerpo.innerHTML += `
+            <tr>
+                <td class="mono">${r.id}</td>
+                <td>${r.nombre}</td>
+                <td>${r.apellido}</td>
+                <td class="mono">${valorOGuion(r.altura)}</td>
+                <td class="mono">${valorOGuion(r.peso)}</td>
+                <td>${nombreDe(ramas, r.idRama)}</td>
+                <td>${evaluado}</td>
+                <td class="acciones">
+                    <button class="boton boton--pequeno boton--secundario" onclick="editarRecluta(${r.id})"><i class="ti ti-edit"></i> Editar</button>
+                    <button class="boton boton--pequeno boton--peligro" onclick="eliminarRecluta(${r.id})"><i class="ti ti-trash"></i> Eliminar</button>
+                </td>
+            </tr>
+        `;
+    });
+}
+
+function guardarRecluta() {
+    const id = document.getElementById("recId").value;
+    const nombre = document.getElementById("recNombre").value.trim();
+    const apellido = document.getElementById("recApellido").value.trim();
+    const alturaTexto = document.getElementById("recAltura").value;
+    const pesoTexto = document.getElementById("recPeso").value;
+    const idRama = document.getElementById("recRama").value;
+
+    if (nombre === "") {
+        mostrarMensaje("Ingrese el nombre del recluta", "error");
+        return;
+    }
+    if (apellido === "") {
+        mostrarMensaje("Ingrese el apellido del recluta", "error");
+        return;
+    }
+    if (idRama === "") {
+        mostrarMensaje("Seleccione una rama", "error");
+        return;
+    }
+
+    // Altura y peso son opcionales, pero si se escriben deben ser mayores que 0
+    let altura = null;
+    if (alturaTexto !== "") {
+        altura = Number(alturaTexto);
+    }
+    let peso = null;
+    if (pesoTexto !== "") {
+        peso = Number(pesoTexto);
+    }
+    if ((altura !== null && altura <= 0) || (peso !== null && peso <= 0)) {
+        mostrarMensaje("La altura y el peso deben ser mayores que 0", "error");
+        return;
+    }
+
+    const reclutas = obtenerDatos("reclutas");
+
+    if (id === "") {
+        reclutas.push({
+            id: siguienteId(reclutas),
+            nombre: nombre,
+            apellido: apellido,
+            altura: altura,
+            peso: peso,
+            idRama: Number(idRama)
+        });
+        mostrarMensaje("Recluta guardado");
+    } else {
+        const recluta = reclutas.find((r) => r.id === Number(id));
+        recluta.nombre = nombre;
+        recluta.apellido = apellido;
+        recluta.altura = altura;
+        recluta.peso = peso;
+        recluta.idRama = Number(idRama);
+        mostrarMensaje("Recluta actualizado");
+    }
+
+    guardarDatos("reclutas", reclutas);
+    limpiarRecluta();
+    mostrarTodo();
+}
+
+function editarRecluta(id) {
+    const recluta = obtenerDatos("reclutas").find((r) => r.id === id);
+    document.getElementById("recId").value = recluta.id;
+    document.getElementById("recNombre").value = recluta.nombre;
+    document.getElementById("recApellido").value = recluta.apellido;
+    document.getElementById("recAltura").value = recluta.altura;
+    document.getElementById("recPeso").value = recluta.peso;
+    document.getElementById("recRama").value = recluta.idRama;
+    document.getElementById("recNombre").focus();
+}
+
+function eliminarRecluta(id) {
+    const aptos = obtenerDatos("aptos").filter((a) => a.idRecluta === id);
+
+    if (aptos.length > 0) {
+        mostrarMensaje("No se puede eliminar: el recluta tiene una evaluación", "error");
+        return;
+    }
+
+    if (confirm("¿Eliminar este recluta?")) {
+        const reclutas = obtenerDatos("reclutas").filter((r) => r.id !== id);
+        guardarDatos("reclutas", reclutas);
+        limpiarRecluta();
+        mostrarTodo();
+        mostrarMensaje("Recluta eliminado");
+    }
+}
+
+function limpiarRecluta() {
+    document.getElementById("recId").value = "";
+    document.getElementById("recNombre").value = "";
+    document.getElementById("recApellido").value = "";
+    document.getElementById("recAltura").value = "";
+    document.getElementById("recPeso").value = "";
+    document.getElementById("recRama").value = "";
+}
+
+
+// ------------------------------------------------------------
+// 11. EXPORTAR A JSON
 // Junta todas las listas en un objeto y descarga un archivo .json
 // ------------------------------------------------------------
 function exportarJSON() {
@@ -301,10 +822,10 @@ function exportarJSON() {
 
 
 // ------------------------------------------------------------
-// 7. INICIO
+// 12. INICIO
 // Como el script está al final del body, el HTML ya existe aquí.
 // ------------------------------------------------------------
 document.getElementById("fechaHoy").textContent = new Date().toLocaleDateString("es-CO");
 
 cargarDatosEjemplo();
-mostrarPanel();
+mostrarTodo();
